@@ -8,16 +8,14 @@ import TestSuiteDetailPage from './src/pages/TestSuiteDetailPage';
 
 const App: React.FC = () => {
   return (
-    <HashRouter>
-      <Routes>
-        <Route path="/" element={<Navigate to="/projects" replace />} />
-        <Route element={<MainLayout />}>
-          <Route path="/projects" element={<ProjectsPage />} />
-          <Route path="/projects/:projectId" element={<ProjectDetailPage />} />
-          <Route path="/projects/:projectId/suites/:suiteId" element={<TestSuiteDetailPage />} />
-        </Route>
-      </Routes>
-    </HashRouter>
+    <Routes>
+      <Route path="/" element={<Navigate to="/projects" replace />} />
+      <Route element={<MainLayout />}>
+        <Route path="/projects" element={<ProjectsPage />} />
+        <Route path="/projects/:projectId" element={<ProjectDetailPage />} />
+        <Route path="/projects/:projectId/suites/:suiteId" element={<TestSuiteDetailPage />} />
+      </Route>
+    </Routes>
   );
 };
 
