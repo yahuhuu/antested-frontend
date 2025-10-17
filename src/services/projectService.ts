@@ -2,17 +2,18 @@
 export interface Project {
   id: string;
   name: string;
+  client: string;
   key: string;
 }
 
-export type NewProject = Omit<Project, 'id'>;
+export type NewProject = Omit<Project, 'id' | 'client'> & { client?: string };
 
 // Data tiruan untuk simulasi
 let mockProjects: Project[] = [
-  { id: 'proj-001', name: 'Sistem E-commerce Klien A', key: 'ECA' },
-  { id: 'proj-002', name: 'Aplikasi Mobile Banking', key: 'MBANK' },
-  { id: 'proj-003', name: 'Platform Analitik Data Internal', key: 'PADI' },
-  { id: 'proj-004', name: 'Sistem Manajemen Inventaris', key: 'SMI' },
+  { id: 'proj-001', name: 'Sistem E-commerce', client: 'Klien A', key: 'ECA' },
+  { id: 'proj-002', name: 'Aplikasi Mobile Banking', client: 'Bank Sejahtera', key: 'MBANK' },
+  { id: 'proj-003', name: 'Platform Analitik Data', client: 'Internal', key: 'PADI' },
+  { id: 'proj-004', name: 'Sistem Manajemen Inventaris', client: 'Gudang Jaya', key: 'SMI' },
 ];
 
 /**
@@ -65,6 +66,7 @@ export const createProject = (newProject: NewProject): Promise<Project> => {
       }
       const createdProject: Project = {
         id: `proj-${new Date().getTime()}`,
+        client: newProject.client || 'N/A',
         ...newProject,
       };
       mockProjects.push(createdProject);

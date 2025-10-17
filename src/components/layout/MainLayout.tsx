@@ -1,35 +1,16 @@
 // Path: components/layout/MainLayout.tsx
 import React, { useState, useEffect, useRef } from 'react';
 import { Outlet, Link, useMatch } from 'react-router-dom';
-import { useTheme } from '../../hooks/useTheme'; // Impor hook useTheme dari path yang benar
+import { useTheme } from '../../hooks/useTheme';
 import ProjectSidebar from './ProjectSidebar';
-
-// --- Icon Components ---
-const SunIcon = ({ className = "w-6 h-6" }: { className?: string }) => (
-  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
-);
-
-const MoonIcon = ({ className = "w-6 h-6" }: { className?: string }) => (
-  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" /></svg>
-);
-
-
-const BellIcon = () => (
-    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" /></svg>
-);
-
-const UserIcon = () => (
-    <svg className="w-8 h-8 rounded-full" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" /></svg>
-);
-
+import { SunIcon, MoonIcon, BellIcon, UserIcon } from '../ui/Icons';
 
 const MainLayout: React.FC = () => {
-    const { theme, toggleTheme } = useTheme(); // Gunakan useTheme hook dengan object destructuring
+    const { theme, toggleTheme } = useTheme();
     const [isProfileOpen, setIsProfileOpen] = useState(false);
     const profileRef = useRef<HTMLDivElement>(null);
     const isProjectPage = useMatch('/projects/:projectId/*');
 
-    // Efek untuk menutup dropdown saat mengklik di luar
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
             if (profileRef.current && !profileRef.current.contains(event.target as Node)) {
@@ -47,11 +28,10 @@ const MainLayout: React.FC = () => {
             <header className="bg-white dark:bg-gray-800 shadow-md p-4 flex-shrink-0 flex justify-between items-center z-20">
                 <h1 className="text-2xl font-bold text-gray-800 dark:text-white">Test Case Manager</h1>
 
-                <div className="flex items-center space-x-2 sm:space-x-4">
-                    {/* Theme Toggle Switch */}
+                <div className="flex items-center space-x-4">
                     <button
                         onClick={toggleTheme}
-                        className={`relative inline-flex items-center h-7 w-12 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-300 ease-in-out focus:outline-none focus:ring-2 focus:ring-offset-2 dark:focus:ring-offset-gray-800 focus:ring-blue-500 ${
+                        className={`relative inline-flex items-center h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-300 ease-in-out focus:outline-none focus:ring-2 focus:ring-offset-2 dark:focus:ring-offset-gray-800 focus:ring-blue-500 ${
                             theme === 'dark' ? 'bg-gray-700' : 'bg-gray-300'
                         }`}
                         role="switch"
@@ -60,34 +40,31 @@ const MainLayout: React.FC = () => {
                     >
                         <span
                             aria-hidden="true"
-                            className={`pointer-events-none inline-flex h-6 w-6 items-center justify-center transform rounded-full bg-white shadow-lg ring-0 transition duration-300 ease-in-out ${
+                            className={`pointer-events-none inline-flex h-5 w-5 items-center justify-center transform rounded-full bg-white shadow-lg ring-0 transition duration-300 ease-in-out ${
                                 theme === 'dark' ? 'translate-x-5' : 'translate-x-0'
                             }`}
                         >
                             {theme === 'dark' ? (
-                                <MoonIcon className="h-4 w-4 text-gray-400" />
+                                <MoonIcon className="h-3 w-3 text-gray-400" />
                             ) : (
-                                <SunIcon className="h-4 w-4 text-yellow-500" />
+                                <SunIcon className="h-3 w-3 text-yellow-500" />
                             )}
                         </span>
                     </button>
 
                     <button className="p-2 rounded-full text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 relative transition-colors">
-                        <BellIcon />
+                        <BellIcon className="w-5 h-5" />
                         <span className="absolute top-1 right-1 block h-2 w-2 rounded-full bg-red-500 ring-2 ring-white dark:ring-gray-800"></span>
                     </button>
-                    
-                    <button className="hidden sm:block px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-md transition-colors">
-                        Admin
-                    </button>
-
-                    <div className="w-px h-6 bg-gray-300 dark:bg-gray-600 hidden sm:block"></div>
 
                     <div className="relative" ref={profileRef}>
-                        <button onClick={() => setIsProfileOpen(!isProfileOpen)} className="flex items-center space-x-2 p-1 rounded-md hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors">
-                            <span className="hidden md:inline text-gray-700 dark:text-gray-200 font-medium">Profile</span>
+                        <button onClick={() => setIsProfileOpen(!isProfileOpen)} className="flex items-center space-x-3 p-1 rounded-md hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors">
+                            <div className="text-right hidden sm:block">
+                                <div className="text-sm font-medium text-gray-800 dark:text-white">Admin</div>
+                                <div className="text-xs text-gray-500 dark:text-gray-400">Profile</div>
+                            </div>
                             <div className="p-1 rounded-full bg-gray-200 dark:bg-gray-600 text-gray-500 dark:text-gray-300">
-                               <UserIcon />
+                               <UserIcon className="w-6 h-6" />
                             </div>
                         </button>
 
