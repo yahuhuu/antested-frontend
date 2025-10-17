@@ -1,0 +1,5 @@
+{
+  "name": "Test Case Management",
+  "description": "A web application to manage and track software test cases, test plans, and test execution runs.",
+  "requestFramePermissions": []
+}
