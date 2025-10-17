@@ -1,7 +1,8 @@
 // Path: components/layout/MainLayout.tsx
 import React, { useState, useEffect, useRef } from 'react';
-import { Outlet, Link } from 'react-router-dom';
+import { Outlet, Link, useMatch } from 'react-router-dom';
 import { useTheme } from '../../hooks/useTheme'; // Impor hook useTheme dari path yang benar
+import ProjectSidebar from './ProjectSidebar';
 
 // --- Icon Components ---
 const SunIcon = ({ className = "w-6 h-6" }: { className?: string }) => (
@@ -26,6 +27,7 @@ const MainLayout: React.FC = () => {
     const { theme, toggleTheme } = useTheme(); // Gunakan useTheme hook dengan object destructuring
     const [isProfileOpen, setIsProfileOpen] = useState(false);
     const profileRef = useRef<HTMLDivElement>(null);
+    const isProjectPage = useMatch('/projects/:projectId/*');
 
     // Efek untuk menutup dropdown saat mengklik di luar
     useEffect(() => {
@@ -42,7 +44,7 @@ const MainLayout: React.FC = () => {
 
     return (
         <div className="flex flex-col h-screen bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100">
-            <header className="bg-white dark:bg-gray-800 shadow-md p-4 flex-shrink-0 flex justify-between items-center z-10">
+            <header className="bg-white dark:bg-gray-800 shadow-md p-4 flex-shrink-0 flex justify-between items-center z-20">
                 <h1 className="text-2xl font-bold text-gray-800 dark:text-white">Test Case Manager</h1>
 
                 <div className="flex items-center space-x-2 sm:space-x-4">
@@ -102,9 +104,12 @@ const MainLayout: React.FC = () => {
                     </div>
                 </div>
             </header>
-            <main className="flex-1 overflow-y-auto bg-gray-50 dark:bg-gray-900 p-6 md:p-8">
-                <Outlet />
-            </main>
+            <div className="flex flex-1 overflow-hidden">
+                {isProjectPage && <ProjectSidebar />}
+                <main className="flex-1 overflow-y-auto bg-gray-50 dark:bg-gray-900 p-6 md:p-8">
+                    <Outlet />
+                </main>
+            </div>
         </div>
     );
 };
