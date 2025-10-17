@@ -21,8 +21,8 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({ activities, isLoading }) =>
   }
 
   const renderSkeleton = () => (
-      <div className="space-y-4 animate-pulse max-h-[200px] overflow-hidden">
-          {[...Array(5)].map((_, i) => (
+      <div className="space-y-4 animate-pulse max-h-36 overflow-hidden">
+          {[...Array(4)].map((_, i) => (
               <div key={i} className="flex items-start space-x-4">
                   <div className="w-10 h-10 bg-gray-200 dark:bg-gray-700 rounded-full"></div>
                   <div className="flex-1 space-y-2">
@@ -41,11 +41,11 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({ activities, isLoading }) =>
   });
 
   return (
-    <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md">
-      <h2 className="text-xl font-bold mb-4">Activity</h2>
+    <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-md">
+      <h2 className="text-xl font-bold mb-2">Activity</h2>
       
       {/* Tabs */}
-      <div className="border-b border-gray-200 dark:border-gray-700 mb-4">
+      <div className="border-b border-gray-200 dark:border-gray-700 mb-3">
         <nav className="-mb-px flex space-x-6" aria-label="Tabs">
           {(['History', 'Test Changes'] as Tab[]).map((tab) => (
             <button
@@ -55,7 +55,7 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({ activities, isLoading }) =>
                 activeTab === tab
                   ? 'border-blue-500 text-blue-600 dark:border-blue-400 dark:text-blue-300'
                   : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-200 dark:hover:border-gray-600'
-              } whitespace-nowrap py-3 px-1 border-b-2 font-medium text-sm transition-colors`}
+              } whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm transition-colors`}
             >
               {tab}
             </button>
@@ -64,9 +64,9 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({ activities, isLoading }) =>
       </div>
 
       {isLoading ? renderSkeleton() : (
-        <ul className="space-y-4 max-h-[200px] overflow-y-auto pr-4">
+        <ul className="space-y-3 max-h-36 overflow-y-auto pr-2">
           {filteredActivities.map(activity => (
-            <li key={activity.id} className="flex items-start space-x-4">
+            <li key={activity.id} className="flex items-start space-x-3">
               <div className="bg-gray-100 dark:bg-gray-700 rounded-full p-2 mt-1">
                 {getIcon(activity.type)}
               </div>
@@ -74,7 +74,7 @@ const ActivityFeed: React.FC<ActivityFeedProps> = ({ activities, isLoading }) =>
                 <p className="text-sm text-gray-800 dark:text-gray-200">
                   <span className="font-bold">{activity.user}</span> {activity.action}.
                 </p>
-                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{activity.timestamp}</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{activity.timestamp}</p>
               </div>
             </li>
           ))}

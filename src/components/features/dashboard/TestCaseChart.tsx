@@ -31,23 +31,23 @@ const LegendItem: React.FC<{color: string, value: number, percentage: number, na
 const TestCaseChart: React.FC<TestCaseChartProps> = ({ data, isLoading }) => {
   if (isLoading) {
     return (
-        <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md animate-pulse">
-            <div className="h-6 w-48 bg-gray-200 dark:bg-gray-700 rounded mb-4"></div>
-            <div className="h-44 bg-gray-200 dark:bg-gray-700 rounded"></div>
+        <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-md animate-pulse">
+            <div className="h-5 w-40 bg-gray-200 dark:bg-gray-700 rounded mb-3"></div>
+            <div className="h-32 bg-gray-200 dark:bg-gray-700 rounded"></div>
         </div>
     );
   }
 
   if (data.length === 0) {
     return (
-        <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md">
-            <h2 className="text-xl font-bold mb-4 text-gray-800 dark:text-white">Test Case Trend</h2>
+        <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-md">
+            <h2 className="text-xl font-bold mb-2 text-gray-800 dark:text-white">Test Case Trend</h2>
             <p className="text-gray-500 dark:text-gray-400">No data available to display chart.</p>
         </div>
     );
   }
 
-  const chartHeight = 180;
+  const chartHeight = 140;
   const chartWidth = 1500;
   const padding = { top: 20, right: 20, bottom: 30, left: 30 };
   const drawableHeight = chartHeight - padding.top - padding.bottom;
@@ -78,8 +78,8 @@ const TestCaseChart: React.FC<TestCaseChartProps> = ({ data, isLoading }) => {
   const automationTotal = lastDataPoint.automationPassed + lastDataPoint.automationFailed + lastDataPoint.automationError;
 
   return (
-    <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md">
-        <div className="flex justify-between items-center mb-4">
+    <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-md">
+        <div className="flex justify-between items-center mb-2">
             <h2 className="text-lg font-bold text-gray-800 dark:text-white">Test Case Trend</h2>
             <span className="text-sm text-gray-500 dark:text-gray-400">In the past {data.length} days</span>
         </div>
@@ -123,6 +123,7 @@ const TestCaseChart: React.FC<TestCaseChartProps> = ({ data, isLoading }) => {
             <div className="space-y-3">
                 <LegendItem color={statusConfig.passed.color} name={statusConfig.passed.name} value={lastDataPoint.passed} percentage={Math.round(manualTotal > 0 ? (lastDataPoint.passed / manualTotal) * 100 : 0)} />
                 <LegendItem color={statusConfig.blocked.color} name={statusConfig.blocked.name} value={lastDataPoint.blocked} percentage={Math.round(manualTotal > 0 ? (lastDataPoint.blocked / manualTotal) * 100 : 0)} />
+                {/* FIX: Removed a large block of extraneous text that was breaking the code. */}
                 <LegendItem color={statusConfig.skipped.color} name={statusConfig.skipped.name} value={lastDataPoint.skipped} percentage={Math.round(manualTotal > 0 ? (lastDataPoint.skipped / manualTotal) * 100 : 0)} />
                 <LegendItem color={statusConfig.failed.color} name={statusConfig.failed.name} value={lastDataPoint.failed} percentage={Math.round(manualTotal > 0 ? (lastDataPoint.failed / manualTotal) * 100 : 0)} />
             </div>

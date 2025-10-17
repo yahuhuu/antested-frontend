@@ -11,15 +11,15 @@ interface StatCardProps {
 const StatCard: React.FC<StatCardProps> = ({ title, data, icon, isLoading }) => {
   if (isLoading) {
     return (
-      <div className="bg-white dark:bg-gray-800 p-5 rounded-lg shadow-md animate-pulse">
-        <div className="h-6 w-24 bg-gray-200 dark:bg-gray-700 rounded mb-2"></div>
-        <div className="h-10 w-16 bg-gray-200 dark:bg-gray-700 rounded"></div>
+      <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-md animate-pulse">
+        <div className="h-5 w-20 bg-gray-200 dark:bg-gray-700 rounded mb-2"></div>
+        <div className="h-8 w-12 bg-gray-200 dark:bg-gray-700 rounded"></div>
       </div>
     );
   }
 
   return (
-    <div className="bg-white dark:bg-gray-800 p-5 rounded-lg shadow-md hover:shadow-lg hover:-translate-y-1 transition-transform duration-300">
+    <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-md hover:shadow-lg hover:-translate-y-1 transition-transform duration-300">
       <div className="flex items-center justify-between">
         <div>
           <p className="text-sm font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">{title}</p>

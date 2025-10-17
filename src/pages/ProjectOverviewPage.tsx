@@ -93,14 +93,13 @@ const ProjectOverviewPage: React.FC = () => {
   if (!project) return <p>Project not found.</p>;
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
       <div>
         <h1 className="text-3xl font-bold text-gray-800 dark:text-white">{project.name} Overview</h1>
-        <p className="text-md text-gray-500 dark:text-gray-400">Welcome back, here's a look at your project's current status.</p>
       </div>
       
       {/* Stat Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
         {statCards.map(card => <StatCard key={card.title} {...card} />)}
       </div>
 
@@ -108,20 +107,20 @@ const ProjectOverviewPage: React.FC = () => {
       <TestCaseChart data={trendData} isLoading={loading.chart} />
 
       {/* Milestones and Test Runs (Side-by-side) */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
         {/* Milestones Section */}
-        <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md">
-            <h2 className="text-xl font-bold mb-4">Milestones</h2>
+        <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-md">
+            <h2 className="text-xl font-bold mb-3">Milestones</h2>
             {loading.milestones ? <p>Loading milestones...</p> : (
-                <ul className="space-y-4">
+                <ul className="space-y-3">
                     {milestones.map(m => (
                         <li key={m.id}>
                             <div className="flex justify-between items-center mb-1">
-                                <span className="font-semibold text-gray-700 dark:text-gray-200">{m.name}</span>
-                                <span className="text-sm text-gray-500 dark:text-gray-400">{m.dueDate}</span>
+                                <span className="font-semibold text-gray-700 dark:text-gray-200 text-sm">{m.name}</span>
+                                <span className="text-xs text-gray-500 dark:text-gray-400">{m.dueDate}</span>
                             </div>
-                            <div className="w-full bg-gray-200 rounded-full h-2.5 dark:bg-gray-700">
-                                <div className="bg-blue-600 h-2.5 rounded-full" style={{ width: `${m.progress}%` }}></div>
+                            <div className="w-full bg-gray-200 rounded-full h-2 dark:bg-gray-700">
+                                <div className="bg-blue-600 h-2 rounded-full" style={{ width: `${m.progress}%` }}></div>
                             </div>
                         </li>
                     ))}
@@ -130,17 +129,17 @@ const ProjectOverviewPage: React.FC = () => {
         </div>
         
         {/* Test Runs Section */}
-        <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md">
-            <h2 className="text-xl font-bold mb-4">Recent Test Runs</h2>
+        <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-md">
+            <h2 className="text-xl font-bold mb-3">Recent Test Runs</h2>
             {loading.runs ? <p>Loading test runs...</p> : (
-                <ul className="space-y-3">
+                <ul className="space-y-2">
                     {testRuns.map(run => (
-                        <li key={run.id} className="flex items-center justify-between p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700">
+                        <li key={run.id} className="flex items-center justify-between p-1.5 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700">
                             <div>
-                                <p className="font-semibold">{run.name}</p>
-                                <p className="text-sm text-gray-500 dark:text-gray-400">Passed: {run.passed}/{run.total}</p>
+                                <p className="font-semibold text-sm">{run.name}</p>
+                                <p className="text-xs text-gray-500 dark:text-gray-400">Passed: {run.passed}/{run.total}</p>
                             </div>
-                            <span className={`px-2 py-1 text-xs font-semibold rounded-full ${run.status === 'Completed' ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300' : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300'}`}>
+                            <span className={`px-2 py-0.5 text-xs font-semibold rounded-full ${run.status === 'Completed' ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300' : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300'}`}>
                                 {run.status}
                             </span>
                         </li>
