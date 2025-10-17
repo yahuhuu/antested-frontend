@@ -48,7 +48,7 @@ const TestCaseChart: React.FC<TestCaseChartProps> = ({ data, isLoading }) => {
   }
 
   const chartHeight = 140;
-  const chartWidth = 1200;
+  const chartWidth = 800; // Adjusted from 1200 for a better aspect ratio
   const padding = { top: 20, right: 20, bottom: 30, left: 30 };
   const drawableHeight = chartHeight - padding.top - padding.bottom;
   const drawableWidth = chartWidth - padding.left - padding.right;

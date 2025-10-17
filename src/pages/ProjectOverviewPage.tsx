@@ -1,6 +1,6 @@
 // Path: pages/ProjectOverviewPage.tsx
 import React, { useState, useEffect, useCallback } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, Link } from 'react-router-dom';
 import { getProjectById, Project } from '../services/projectService';
 import { 
     getProjectStats, 
@@ -110,7 +110,10 @@ const ProjectOverviewPage: React.FC = () => {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
         {/* Milestones Section */}
         <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-md">
-            <h2 className="text-xl font-bold mb-3">Milestones</h2>
+            <div className="flex justify-between items-center mb-3">
+                <h2 className="text-xl font-bold">Milestones</h2>
+                <Link to={`/projects/${projectId}/milestones`} className="text-sm font-medium text-blue-600 dark:text-blue-400 hover:underline">View All</Link>
+            </div>
             {loading.milestones ? <p>Loading milestones...</p> : (
                 <ul className="space-y-3">
                     {milestones.map(m => (
@@ -130,7 +133,10 @@ const ProjectOverviewPage: React.FC = () => {
         
         {/* Test Runs Section */}
         <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-md">
-            <h2 className="text-xl font-bold mb-3">Recent Test Runs</h2>
+            <div className="flex justify-between items-center mb-3">
+                <h2 className="text-xl font-bold">Recent Test Runs</h2>
+                <Link to={`/projects/${projectId}/runs`} className="text-sm font-medium text-blue-600 dark:text-blue-400 hover:underline">View All</Link>
+            </div>
             {loading.runs ? <p>Loading test runs...</p> : (
                 <ul className="space-y-2">
                     {testRuns.map(run => (
