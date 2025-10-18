@@ -13,21 +13,61 @@ interface AIGenerateModalProps {
   projectId: string;
 }
 
+const CancelConfirmationModal: React.FC<{
+  isOpen: boolean;
+  onConfirm: () => void;
+  onCancel: () => void;
+}> = ({ isOpen, onConfirm, onCancel }) => {
+  if (!isOpen) return null;
+
+  return (
+    <div
+      className="fixed inset-0 bg-black bg-opacity-60 z-[70] flex justify-center items-center"
+      onClick={onCancel}
+    >
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-md m-4 p-6 text-left" onClick={e => e.stopPropagation()}>
+        <h3 className="text-lg font-bold text-gray-900 dark:text-white">Confirm Cancellation</h3>
+        <p className="mt-2 text-sm text-gray-600 dark:text-gray-300">
+          Canceling will stop the test case generation process. Any progress made, including the AI credits used so far, will be lost. Do you want to proceed?
+        </p>
+        <div className="mt-6 flex justify-end space-x-4">
+          <button
+            onClick={onCancel}
+            className="px-6 py-2 bg-gray-200 text-gray-800 font-semibold rounded-lg shadow-sm hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600"
+          >
+            No, Keep
+          </button>
+          <button
+            onClick={onConfirm}
+            className="px-6 py-2 bg-red-600 text-white font-semibold rounded-lg shadow-md hover:bg-red-700"
+          >
+            Yes, Cancel
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+
 const AIGenerateModal: React.FC<AIGenerateModalProps> = ({ isOpen, onClose, directories, projectId }) => {
   const [currentStep, setCurrentStep] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
   const [isGeneratingMore, setIsGeneratingMore] = useState(false);
+  const [isCancelConfirmOpen, setIsCancelConfirmOpen] = useState(false);
 
   // Data shared across steps
   const [requirements, setRequirements] = useState('');
+  const [attachments, setAttachments] = useState<File[]>([]);
   const [selectedDirectory, setSelectedDirectory] = useState<string>('');
   const [suggestions, setSuggestions] = useState<AISuggestion[]>([]);
   const [generatedCount, setGeneratedCount] = useState(0);
 
-  const handleContinueFromStep1 = async (reqs: string, dir: string) => {
+  const handleContinueFromStep1 = async (reqs: string, dir: string, files: File[]) => {
     setIsLoading(true);
     setRequirements(reqs);
     setSelectedDirectory(dir);
+    setAttachments(files);
     try {
         const suggs = await getAISuggestions(reqs);
         setSuggestions(suggs);
@@ -40,10 +80,12 @@ const AIGenerateModal: React.FC<AIGenerateModalProps> = ({ isOpen, onClose, dire
     }
   };
 
-  const handleRegenerate = async (reqs: string) => {
+  const handleRegenerate = async (reqs: string, files: File[]) => {
     setIsLoading(true);
     setRequirements(reqs);
+    setAttachments(files);
     try {
+        // In a real scenario, you would probably send the files to the AI as well
         const suggs = await getAISuggestions(reqs);
         setSuggestions(suggs);
     } catch (error) {
@@ -82,12 +124,14 @@ const AIGenerateModal: React.FC<AIGenerateModalProps> = ({ isOpen, onClose, dire
       }
   };
   
-  const handleClose = (didGenerate: boolean = false) => {
+  const handleFinalClose = (didGenerate: boolean = false) => {
+    setIsCancelConfirmOpen(false);
     // Reset state on close
     setTimeout(() => {
         setCurrentStep(1);
         setIsLoading(false);
         setRequirements('');
+        setAttachments([]);
         setSelectedDirectory('');
         setSuggestions([]);
         setGeneratedCount(0);
@@ -95,63 +139,79 @@ const AIGenerateModal: React.FC<AIGenerateModalProps> = ({ isOpen, onClose, dire
     onClose(didGenerate);
   };
 
+  const handleAttemptClose = () => {
+    if (currentStep === 2) {
+      setIsCancelConfirmOpen(true);
+    } else {
+      handleFinalClose(false);
+    }
+  };
+
 
   if (!isOpen) return null;
 
   return (
-    <div
-      className="fixed inset-0 bg-black bg-opacity-60 z-50 flex justify-center items-center"
-      onClick={() => handleClose()}
-    >
+    <>
       <div
-        className="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-6xl transform transition-all"
-        onClick={(e) => e.stopPropagation()}
+        className="fixed inset-0 bg-black bg-opacity-60 z-50 flex justify-center items-center"
+        onClick={handleAttemptClose}
       >
-        <div className="p-6">
-            <div className="flex justify-between items-start mb-4">
-                <h2 className="text-2xl font-bold text-gray-800 dark:text-white">AI Generate Test Cases</h2>
-                <button onClick={() => handleClose()} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition" aria-label="Close">
-                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-                </button>
-            </div>
+        <div
+          className="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-6xl transform transition-all"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div className="p-6">
+              <div className="flex justify-between items-start mb-4">
+                  <h2 className="text-2xl font-bold text-gray-800 dark:text-white">AI Generate Test Cases</h2>
+                  <button onClick={handleAttemptClose} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition" aria-label="Close">
+                      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                  </button>
+              </div>
 
-            {/* Step Indicator */}
-            <div className="flex justify-center items-center mb-6">
-                {/* Step lines and circles logic could be more complex, simple version for now */}
-                <div className={`flex items-center ${currentStep >= 1 ? 'text-blue-600 dark:text-blue-400' : 'text-gray-400'}`}>
-                    <div className="w-8 h-8 rounded-full border-2 flex items-center justify-center font-bold">{currentStep > 1 ? '✓' : '1'}</div>
-                    <span className="ml-2 font-semibold">Define Requirement</span>
-                </div>
-                <div className={`flex-1 mx-4 h-0.5 ${currentStep > 1 ? 'bg-blue-600 dark:bg-blue-400' : 'bg-gray-300 dark:bg-gray-600'}`}></div>
-                <div className={`flex items-center ${currentStep >= 2 ? 'text-blue-600 dark:text-blue-400' : 'text-gray-400'}`}>
-                    <div className="w-8 h-8 rounded-full border-2 flex items-center justify-center font-bold">{currentStep > 2 ? '✓' : '2'}</div>
-                    <span className="ml-2 font-semibold">Review, Edit & Select</span>
-                </div>
-                <div className={`flex-1 mx-4 h-0.5 ${currentStep > 2 ? 'bg-blue-600 dark:bg-blue-400' : 'bg-gray-300 dark:bg-gray-600'}`}></div>
-                <div className={`flex items-center ${currentStep >= 3 ? 'text-blue-600 dark:text-blue-400' : 'text-gray-400'}`}>
-                    <div className="w-8 h-8 rounded-full border-2 flex items-center justify-center font-bold">3</div>
-                    <span className="ml-2 font-semibold">Generate Test Cases</span>
-                </div>
-            </div>
+              {/* Step Indicator */}
+              <div className="flex justify-center items-center mb-6">
+                  {/* Step lines and circles logic could be more complex, simple version for now */}
+                  <div className={`flex items-center ${currentStep >= 1 ? 'text-blue-600 dark:text-blue-400' : 'text-gray-400'}`}>
+                      <div className="w-8 h-8 rounded-full border-2 flex items-center justify-center font-bold">{currentStep > 1 ? '✓' : '1'}</div>
+                      <span className="ml-2 font-semibold">Define Requirement</span>
+                  </div>
+                  <div className={`flex-1 mx-4 h-0.5 ${currentStep > 1 ? 'bg-blue-600 dark:bg-blue-400' : 'bg-gray-300 dark:bg-gray-600'}`}></div>
+                  <div className={`flex items-center ${currentStep >= 2 ? 'text-blue-600 dark:text-blue-400' : 'text-gray-400'}`}>
+                      <div className="w-8 h-8 rounded-full border-2 flex items-center justify-center font-bold">{currentStep > 2 ? '✓' : '2'}</div>
+                      <span className="ml-2 font-semibold">Review, Edit & Select</span>
+                  </div>
+                  <div className={`flex-1 mx-4 h-0.5 ${currentStep > 2 ? 'bg-blue-600 dark:bg-blue-400' : 'bg-gray-300 dark:bg-gray-600'}`}></div>
+                  <div className={`flex items-center ${currentStep >= 3 ? 'text-blue-600 dark:text-blue-400' : 'text-gray-400'}`}>
+                      <div className="w-8 h-8 rounded-full border-2 flex items-center justify-center font-bold">3</div>
+                      <span className="ml-2 font-semibold">Generate Test Cases</span>
+                  </div>
+              </div>
 
-            {/* Step Content */}
-            <div className="h-[580px] flex flex-col">
-                {currentStep === 1 && <Step1DefineRequirement onContinue={handleContinueFromStep1} directories={directories} isLoading={isLoading} />}
-                {currentStep === 2 && <Step2ReviewAndSelect 
-                    onGenerate={handleGenerateFromStep2} 
-                    suggestions={suggestions} 
-                    requirements={requirements}
-                    onRegenerate={handleRegenerate}
-                    isRegenerating={isLoading}
-                    onGenerateMore={handleGenerateMore}
-                    isGeneratingMore={isGeneratingMore}
-                    onCancel={() => handleClose(false)}
-                />}
-                {currentStep === 3 && <Step3Complete onClose={() => handleClose(true)} generatedCount={generatedCount} directoryName={selectedDirectory} />}
-            </div>
+              {/* Step Content */}
+              <div className="h-[580px] flex flex-col">
+                  {currentStep === 1 && <Step1DefineRequirement onContinue={handleContinueFromStep1} directories={directories} isLoading={isLoading} />}
+                  {currentStep === 2 && <Step2ReviewAndSelect 
+                      onGenerate={handleGenerateFromStep2} 
+                      suggestions={suggestions} 
+                      requirements={requirements}
+                      attachments={attachments}
+                      onRegenerate={handleRegenerate}
+                      isRegenerating={isLoading}
+                      onGenerateMore={handleGenerateMore}
+                      isGeneratingMore={isGeneratingMore}
+                      onCancel={handleAttemptClose}
+                  />}
+                  {currentStep === 3 && <Step3Complete onClose={() => handleFinalClose(true)} generatedCount={generatedCount} directoryName={selectedDirectory} />}
+              </div>
+          </div>
         </div>
       </div>
-    </div>
+      <CancelConfirmationModal
+        isOpen={isCancelConfirmOpen}
+        onConfirm={() => handleFinalClose(false)}
+        onCancel={() => setIsCancelConfirmOpen(false)}
+      />
+    </>
   );
 };
 

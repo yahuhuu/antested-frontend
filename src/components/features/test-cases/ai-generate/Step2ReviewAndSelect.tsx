@@ -2,18 +2,27 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { AISuggestion } from '../../../../services/aiService';
 import { Checkbox } from '../../../ui/Checkbox';
-import { EditIcon, SparklesIcon, FileIcon, ImageIcon, VideoIcon, CodeIcon } from '../../../ui/Icons';
+import { EditIcon, SparklesIcon, PlusIcon, InfoIcon } from '../../../ui/Icons';
 
 interface Step2Props {
     onGenerate: (selected: AISuggestion[]) => void;
     suggestions: AISuggestion[];
     requirements: string;
-    onRegenerate: (newRequirements: string) => Promise<void>;
+    attachments: File[];
+    onRegenerate: (newRequirements: string, newAttachments: File[]) => Promise<void>;
     isRegenerating: boolean;
     onGenerateMore: () => Promise<void>;
     isGeneratingMore: boolean;
     onCancel: () => void;
 }
+
+const testMethods: Record<string, string> = {
+    'Default': 'The AI will automatically select the most appropriate method based on the provided requirements.',
+    'Equivalence Partitioning': 'Divides input data into equivalent partitions from which test cases can be derived. This helps reduce the total number of test cases.',
+    'Boundary Value Analysis': 'Focuses on testing the boundaries between partitions. It is often used with Equivalence Partitioning.',
+    'Decision Table Testing': 'A systematic approach where you identify conditions and the resulting actions to consider complex business rules.',
+    'State Transition Testing': 'Helps to test the behavior of a system that exhibits a finite number of states.',
+};
 
 const EditConfirmationModal: React.FC<{ isOpen: boolean; onCancel: () => void; onConfirm: () => void; }> = ({ isOpen, onCancel, onConfirm }) => {
     if (!isOpen) return null;
@@ -44,7 +53,8 @@ const EditConfirmationModal: React.FC<{ isOpen: boolean; onCancel: () => void; o
 const Step2ReviewAndSelect: React.FC<Step2Props> = ({ 
     onGenerate, 
     suggestions: initialSuggestions, 
-    requirements: initialRequirements, 
+    requirements: initialRequirements,
+    attachments: initialAttachments,
     onRegenerate, 
     isRegenerating, 
     onGenerateMore,
@@ -53,7 +63,7 @@ const Step2ReviewAndSelect: React.FC<Step2Props> = ({
 }) => {
     const [suggestions, setSuggestions] = useState(initialSuggestions);
     const [localRequirements, setLocalRequirements] = useState(initialRequirements);
-    const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set()); // Not selected by default
+    const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
     
     const [editingId, setEditingId] = useState<string | null>(null);
     const [editCache, setEditCache] = useState<{ title: string; description: string } | null>(null);
@@ -61,13 +71,31 @@ const Step2ReviewAndSelect: React.FC<Step2Props> = ({
     const [isEditingRequirements, setIsEditingRequirements] = useState(false);
     const [showConfirmModal, setShowConfirmModal] = useState(false);
     
-    const [attachments, setAttachments] = useState<File[]>([]);
+    // State for editing requirements section
+    const [attachments, setAttachments] = useState<File[]>(initialAttachments);
+    const [isAttachMenuOpen, setIsAttachMenuOpen] = useState(false);
+    const [method, setMethod] = useState('Default');
     const fileInputRef = useRef<HTMLInputElement>(null);
+    const attachMenuRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
         setSuggestions(initialSuggestions);
-        // Do not update selected IDs here, keep user's selection across regenerations
     }, [initialSuggestions]);
+
+    useEffect(() => {
+        setLocalRequirements(initialRequirements);
+        setAttachments(initialAttachments);
+    }, [initialRequirements, initialAttachments]);
+
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (attachMenuRef.current && !attachMenuRef.current.contains(event.target as Node)) {
+                setIsAttachMenuOpen(false);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
 
     const areAllSelected = selectedIds.size > 0 && selectedIds.size === suggestions.length;
 
@@ -114,21 +142,40 @@ const Step2ReviewAndSelect: React.FC<Step2Props> = ({
     const handleCancelEditRequirements = () => {
         setIsEditingRequirements(false);
         setLocalRequirements(initialRequirements);
-        setAttachments([]);
+        setAttachments(initialAttachments);
     };
     const handleRegenerateClick = async () => {
-        await onRegenerate(localRequirements);
+        await onRegenerate(localRequirements, attachments);
         setIsEditingRequirements(false);
-        setAttachments([]);
     };
 
     // --- Attachment Handlers ---
-    const handleAddAttachment = () => fileInputRef.current?.click();
+    const MAX_FILE_SIZE = 100 * 1024 * 1024; // 100 MB
+
     const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
-        if (event.target.files) {
-            setAttachments(prev => [...prev, ...Array.from(event.target.files!)]);
+        if (!event.target.files) return;
+
+        const newFiles = Array.from(event.target.files);
+        const validFiles: File[] = [];
+        
+        for (const file of newFiles) {
+            if (file.size > MAX_FILE_SIZE) {
+                alert(`File "${file.name}" is too large. The maximum size is 100 MB.`);
+            } else {
+                validFiles.push(file);
+            }
         }
+
+        if (validFiles.length > 0) {
+            setAttachments(prev => [...prev, ...validFiles]);
+        }
+
+        if (fileInputRef.current) {
+            fileInputRef.current.value = ''; // Reset to allow same file selection again
+        }
+        setIsAttachMenuOpen(false);
     };
+
     const handleRemoveAttachment = (fileName: string) => {
         setAttachments(prev => prev.filter(file => file.name !== fileName));
     };
@@ -191,27 +238,57 @@ const Step2ReviewAndSelect: React.FC<Step2Props> = ({
                         {!isEditingRequirements ? (<button onClick={handleEditRequirementsClick} className="text-sm font-medium text-blue-600 dark:text-blue-400 hover:underline">Edit Requirement</button>) : (<button onClick={() => setLocalRequirements('')} className="text-sm font-medium text-blue-600 dark:text-blue-400 hover:underline">clear</button>)}
                     </div>
                     <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Enter clear, detailed requirements for more relevant test coverage.</p>
-                    <textarea readOnly={!isEditingRequirements} value={localRequirements} onChange={(e) => setLocalRequirements(e.target.value)} className="flex-1 w-full p-2 mt-2 text-sm bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md resize-none disabled:bg-gray-100 dark:disabled:bg-gray-800" disabled={!isEditingRequirements}/>
-                    {isEditingRequirements && (
-                        <div className="pt-2">
-                            <div className="flex items-center gap-2 p-2 bg-gray-100 dark:bg-gray-700/50 border border-gray-300 dark:border-gray-600 rounded-md">
-                                <button onClick={handleAddAttachment} className="p-2 text-gray-500 hover:text-gray-800 dark:hover:text-white rounded hover:bg-gray-200 dark:hover:bg-gray-600"><FileIcon /></button>
-                                <button onClick={handleAddAttachment} className="p-2 text-gray-500 hover:text-gray-800 dark:hover:text-white rounded hover:bg-gray-200 dark:hover:bg-gray-600"><ImageIcon /></button>
-                                <button onClick={handleAddAttachment} className="p-2 text-gray-500 hover:text-gray-800 dark:hover:text-white rounded hover:bg-gray-200 dark:hover:bg-gray-600"><VideoIcon /></button>
-                                <button onClick={handleAddAttachment} className="p-2 text-gray-500 hover:text-gray-800 dark:hover:text-white rounded hover:bg-gray-200 dark:hover:bg-gray-600"><CodeIcon /></button>
+                    
+                     <div className={`mt-2 border rounded-md flex flex-col flex-grow ${
+                        isEditingRequirements ? 'border-gray-300 dark:border-gray-600' : 'border-transparent'
+                     }`}>
+                        <textarea
+                            value={localRequirements}
+                            readOnly={!isEditingRequirements}
+                            onChange={(e) => setLocalRequirements(e.target.value)}
+                            className="w-full p-3 bg-white dark:bg-gray-700 rounded-t-md focus:outline-none block flex-grow resize-none disabled:bg-gray-100 dark:disabled:bg-gray-800"
+                            placeholder="Describe the feature, user story, or acceptance criteria here..."
+                            disabled={!isEditingRequirements}
+                        />
+                         {attachments.length > 0 && (
+                            <div className="p-2 border-t border-gray-200 dark:border-gray-700 space-y-1 max-h-24 overflow-y-auto">
+                                {attachments.map((file, index) => (
+                                    <div key={index} className="flex items-center justify-between text-xs p-1 bg-gray-100 dark:bg-gray-700 rounded">
+                                        <span className="truncate pr-2">{file.name}</span>
+                                        {isEditingRequirements && (
+                                            <button onClick={() => handleRemoveAttachment(file.name)} className="font-bold text-red-500 hover:text-red-700 ml-2 flex-shrink-0">&times;</button>
+                                        )}
+                                    </div>
+                                ))}
                             </div>
-                            {attachments.length > 0 && (
-                                <div className="mt-2 space-y-1">
-                                    {attachments.map((file, index) => (
-                                        <div key={index} className="flex items-center justify-between text-xs p-1 bg-gray-100 dark:bg-gray-700 rounded">
-                                            <span className="truncate">{file.name}</span>
-                                            <button onClick={() => handleRemoveAttachment(file.name)} className="text-red-500 hover:text-red-700 ml-2">&times;</button>
+                        )}
+                        {isEditingRequirements && (
+                            <div className="flex items-center justify-between gap-2 p-2 bg-gray-50 dark:bg-gray-700/50 border-t border-gray-300 dark:border-gray-600 rounded-b-md">
+                               <div className="flex items-center gap-2">
+                                 <div className="relative" ref={attachMenuRef}>
+                                    <button onClick={() => setIsAttachMenuOpen(prev => !prev)} className="p-2 text-gray-500 hover:text-gray-800 dark:hover:text-white rounded-full hover:bg-gray-200 dark:hover:bg-gray-600"><PlusIcon /></button>
+                                    {isAttachMenuOpen && (
+                                        <div className="absolute bottom-full mb-2 w-48 bg-white dark:bg-gray-800 rounded-md shadow-lg border dark:border-gray-700 py-1 z-10">
+                                            <button onClick={() => { fileInputRef.current?.click(); }} className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700">Upload file</button>
+                                            <button onClick={() => setIsAttachMenuOpen(false)} className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700">Add from Drive</button>
+                                            <button onClick={() => setIsAttachMenuOpen(false)} className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700">Import code</button>
                                         </div>
-                                    ))}
-                                </div>
-                            )}
-                        </div>
-                    )}
+                                    )}
+                                 </div>
+                                 <div className="relative group flex items-center gap-1">
+                                    <label className="text-sm font-medium text-gray-600 dark:text-gray-300">Method:</label>
+                                    <select value={method} onChange={e => setMethod(e.target.value)} className="text-sm pl-2 pr-6 py-1 bg-transparent dark:bg-gray-800 border-none focus:ring-0">
+                                        {Object.keys(testMethods).map(m => <option key={m} value={m}>{m}</option>)}
+                                    </select>
+                                    <InfoIcon className="w-4 h-4 text-gray-400" />
+                                    <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-64 p-2 bg-gray-800 text-white text-xs rounded-md shadow-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10">
+                                        {testMethods[method as keyof typeof testMethods]}
+                                    </div>
+                                 </div>
+                               </div>
+                            </div>
+                        )}
+                    </div>
                 </div>
             </div>
             
