@@ -60,8 +60,10 @@ const ProjectOverviewPage: React.FC = () => {
             const data = await fetcher();
             stateSetter(data);
         } catch (err) {
-            console.error(`Failed to load ${loadingKey}`, err);
-            setError(prev => prev ? `${prev}, ${loadingKey}` : `Failed to load ${loadingKey}`);
+            // FIX: Explicitly convert `loadingKey` to a string to prevent potential runtime errors
+            // with implicit symbol-to-string conversion in template literals.
+            console.error(`Failed to load ${String(loadingKey)}`, err);
+            setError(prev => prev ? `${prev}, ${String(loadingKey)}` : `Failed to load ${String(loadingKey)}`);
         } finally {
             setLoading(prev => ({ ...prev, [loadingKey]: false }));
         }

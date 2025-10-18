@@ -111,11 +111,23 @@ const TestCaseChart: React.FC<TestCaseChartProps> = ({ data, isLoading }) => {
             ))}
             
             {/* Data Points */}
-            {points.map((pointGroup, i) => (
-                Object.entries(pointGroup).map(([key, coords]) => (
-                    <circle key={`${i}-${key}`} cx={coords.x} cy={coords.y} r="3" fill={statusConfig[key as StatusKey].color} className="stroke-white dark:stroke-gray-800" strokeWidth="1" />
-                ))
-            ))}
+            {points.map((pointGroup, i) =>
+              Object.entries(pointGroup).map(([key, coords]) => {
+                // FIX: Explicitly cast `coords` because Object.entries can return a weakly typed value (`unknown`), causing property access errors.
+                const typedCoords = coords as { x: number; y: number };
+                return (
+                  <circle
+                    key={`${i}-${key}`}
+                    cx={typedCoords.x}
+                    cy={typedCoords.y}
+                    r="3"
+                    fill={statusConfig[key as StatusKey].color}
+                    className="stroke-white dark:stroke-gray-800"
+                    strokeWidth="1"
+                  />
+                );
+              }),
+            )}
           </svg>
         </div>
         <div className="flex-shrink-0 flex flex-col sm:flex-row gap-4 sm:gap-8">
