@@ -7,6 +7,7 @@ import { TestCaseTable } from '../components/features/test-cases/TestCaseTable';
 import { Pagination } from '../components/features/test-cases/Pagination';
 import DeleteTestCaseModal from '../components/features/test-cases/DeleteTestCaseModal';
 import AddDirectoryModal from '../components/features/test-cases/AddDirectoryModal';
+import AIGenerateModal from '../components/features/test-cases/AIGenerateModal';
 import { SearchIcon, SparklesIcon, PlusIcon, ChevronDownIcon, TrashIcon as DeleteIcon, FolderIcon } from '../components/ui/Icons';
 
 
@@ -62,6 +63,10 @@ const ProjectTestCasesPage: React.FC = () => {
     // State for delete confirmation modal
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
     const [casesToDelete, setCasesToDelete] = useState<Set<string>>(new Set());
+
+    // State for AI Generate Modal
+    const [isAIGenerateModalOpen, setIsAIGenerateModalOpen] = useState(false);
+
 
     const fetchTestCases = useCallback(async () => {
         if (!projectId) return;
@@ -166,6 +171,14 @@ const ProjectTestCasesPage: React.FC = () => {
         }
     };
 
+    const handleAIGenerateClose = (didGenerate: boolean) => {
+        setIsAIGenerateModalOpen(false);
+        if (didGenerate) {
+            // Refresh test cases if AI generated new ones
+            fetchTestCases();
+        }
+    };
+
 
     const totalPages = useMemo(() => Math.ceil(totalCases / rowsPerPage), [totalCases, rowsPerPage]);
     const areAllVisibleSelected = selectedCases.size > 0 && testCases.length > 0 && testCases.every(tc => selectedCases.has(tc.id));
@@ -187,8 +200,8 @@ const ProjectTestCasesPage: React.FC = () => {
                         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                             <h1 className="text-2xl font-bold text-gray-800 dark:text-white">Test Cases</h1>
                             <div className="flex items-center gap-2">
-                                <button className="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white bg-purple-600 rounded-md hover:bg-purple-700 transition-colors">
-                                    <SparklesIcon /> AI Generate
+                                <button onClick={() => setIsAIGenerateModalOpen(true)} className="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white bg-purple-600 rounded-md hover:bg-purple-700 transition-colors">
+                                    <SparklesIcon /> AI Generate Test Case
                                 </button>
                                 <button className="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white bg-blue-600 rounded-md hover:bg-blue-700 transition-colors">
                                     <PlusIcon /> Create Test Case
@@ -274,6 +287,12 @@ const ProjectTestCasesPage: React.FC = () => {
                 onClose={() => setIsAddDirectoryModalOpen(false)}
                 onSave={handleSaveDirectory}
                 parentId={addDirectoryParentId}
+            />
+            <AIGenerateModal
+                isOpen={isAIGenerateModalOpen}
+                onClose={handleAIGenerateClose}
+                directories={userDirectories}
+                projectId={projectId!}
             />
         </>
     );
