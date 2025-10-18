@@ -97,13 +97,13 @@ export const TestCaseDirectory: React.FC<DirectoryProps> = ({ activeDirectory, o
 
     return (
         <aside className="w-64 flex-shrink-0 bg-white dark:bg-gray-800 rounded-lg shadow-md p-4 flex flex-col">
-            <div className="flex justify-between items-center mb-4">
+            <div className="flex justify-between items-center mb-4 flex-shrink-0">
                 <h2 className="text-lg font-bold text-gray-800 dark:text-white">Directory</h2>
                 <button onClick={() => onAddDirectory(null)} className="p-1 text-gray-500 hover:text-gray-800 dark:hover:text-white">
                     <PlusIcon />
                 </button>
             </div>
-            <nav className="flex flex-col gap-1">
+            <nav className="flex flex-col gap-1 flex-grow overflow-y-auto min-h-0 pr-2 -mr-2">
                 {defaultDirectories.map(node => (
                     <DirectoryNodeItem key={node.id} node={node} activeDirectory={activeDirectory} onSelect={onSelect} onAddDirectory={() => {}} />
                 ))}
