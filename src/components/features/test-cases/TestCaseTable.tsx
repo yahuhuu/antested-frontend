@@ -47,7 +47,7 @@ export const TestCaseTable: React.FC<TestCaseTableProps> = ({
     areAllVisibleSelected,
     onDelete
 }) => {
-    const tableHeaders = ["Case ID", "Name", "Directory", "Priority", "Status", "Assignee", "Last Updated", "Actions"];
+    const tableHeaders = ["Case ID", "Name", "Directory", "Priority", "Status", "Assignee", "Actions"];
     const [openMenu, setOpenMenu] = useState<string | null>(null);
     const menuRef = useRef<HTMLDivElement>(null);
 
@@ -68,25 +68,24 @@ export const TestCaseTable: React.FC<TestCaseTableProps> = ({
 
     const renderContent = () => {
         if (loading) return (
-            <tr><td colSpan={9} className="text-center py-10 text-gray-500 dark:text-gray-400">Loading test cases...</td></tr>
+            <tr><td colSpan={8} className="text-center py-10 text-gray-500 dark:text-gray-400">Loading test cases...</td></tr>
         );
         if (error) return (
-            <tr><td colSpan={9} className="text-center py-10 text-red-500">{error}</td></tr>
+            <tr><td colSpan={8} className="text-center py-10 text-red-500">{error}</td></tr>
         );
         if (testCases.length === 0) {
-            return <tr><td colSpan={9} className="text-center py-10 text-gray-500 dark:text-gray-400">No test cases found.</td></tr>;
+            return <tr><td colSpan={8} className="text-center py-10 text-gray-500 dark:text-gray-400">No test cases found.</td></tr>;
         }
 
         return testCases.map((tc) => (
             <tr key={tc.id} className="border-b border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50">
                 <td className="px-4 py-3"><Checkbox id={`cb-${tc.id}`} checked={selectedCases.has(tc.id)} onChange={e => onSelectItem(tc.id, e.target.checked)} /></td>
                 <td className="px-4 py-3 whitespace-nowrap text-sm font-mono text-gray-500 dark:text-gray-400">{tc.caseId}</td>
-                <td className="px-4 py-3 text-sm font-semibold text-gray-800 dark:text-gray-100 truncate" style={{ maxWidth: '250px' }}>{tc.name}</td>
+                <td className="px-4 py-3 text-sm font-semibold text-gray-800 dark:text-gray-100 truncate" style={{ maxWidth: '200px' }} title={tc.name}>{tc.name}</td>
                 <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-600 dark:text-gray-300">{tc.directory}</td>
                 <td className="px-4 py-3 whitespace-nowrap"><PriorityBadge priority={tc.priority} /></td>
                 <td className="px-4 py-3 whitespace-nowrap"><StatusBadge status={tc.status} /></td>
                 <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-600 dark:text-gray-300">{tc.assignee}</td>
-                <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-600 dark:text-gray-300">{tc.lastUpdated}</td>
                 <td className="px-4 py-3 text-center relative">
                     <button onClick={() => setOpenMenu(openMenu === tc.id ? null : tc.id)} className="text-gray-500 hover:text-gray-800 dark:hover:text-gray-200 p-1 rounded-full hover:bg-gray-200 dark:hover:bg-gray-600">
                         <EllipsisIcon />
