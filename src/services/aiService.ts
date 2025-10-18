@@ -51,6 +51,33 @@ export const getAISuggestions = (requirements: string): Promise<AISuggestion[]> 
 };
 
 /**
+ * Simulates fetching more unique suggestions from the AI.
+ * @returns A promise that resolves with an array of new suggestions.
+ */
+export const getMoreAISuggestions = (): Promise<AISuggestion[]> => {
+    console.log("Getting MORE AI suggestions...");
+    return new Promise((resolve) => {
+        setTimeout(() => {
+            const moreSuggestions: AISuggestion[] = [
+                {
+                    id: 'ai-sugg-6',
+                    title: 'Verify case-insensitive login for username',
+                    description: 'User enters a valid username with mixed casing (e.g., "Admin" instead of "admin") and a valid password. The login should be successful.'
+                },
+                {
+                    id: 'ai-sugg-7',
+                    title: 'Verify session timeout after inactivity',
+                    description: 'User logs in and remains inactive for the specified timeout period. The session should expire, and the user should be prompted to log in again upon the next action.'
+                }
+            ];
+            console.log("Received more AI suggestions.");
+            resolve(moreSuggestions);
+        }, 2000);
+    });
+};
+
+
+/**
  * Simulates generating and saving the final test cases based on user selection.
  * @param selectedSuggestions The suggestions chosen by the user.
  * @param directoryId The directory where the test cases should be saved.

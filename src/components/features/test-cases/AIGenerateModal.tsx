@@ -1,7 +1,7 @@
 // Path: src/components/features/test-cases/AIGenerateModal.tsx
 import React, { useState } from 'react';
 import { DirectoryNode } from './TestCaseDirectory';
-import { AISuggestion, getAISuggestions, generateTestCases } from '../../../services/aiService';
+import { AISuggestion, getAISuggestions, generateTestCases, getMoreAISuggestions } from '../../../services/aiService';
 import Step1DefineRequirement from './ai-generate/Step1DefineRequirement';
 import Step2ReviewAndSelect from './ai-generate/Step2ReviewAndSelect';
 import Step3Complete from './ai-generate/Step3Complete';
@@ -16,12 +16,12 @@ interface AIGenerateModalProps {
 const AIGenerateModal: React.FC<AIGenerateModalProps> = ({ isOpen, onClose, directories, projectId }) => {
   const [currentStep, setCurrentStep] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
+  const [isGeneratingMore, setIsGeneratingMore] = useState(false);
 
   // Data shared across steps
   const [requirements, setRequirements] = useState('');
   const [selectedDirectory, setSelectedDirectory] = useState<string>('');
   const [suggestions, setSuggestions] = useState<AISuggestion[]>([]);
-  const [selectedSuggestions, setSelectedSuggestions] = useState<Set<string>>(new Set());
   const [generatedCount, setGeneratedCount] = useState(0);
 
   const handleContinueFromStep1 = async (reqs: string, dir: string) => {
@@ -39,6 +39,33 @@ const AIGenerateModal: React.FC<AIGenerateModalProps> = ({ isOpen, onClose, dire
         setIsLoading(false);
     }
   };
+
+  const handleRegenerate = async (reqs: string) => {
+    setIsLoading(true);
+    setRequirements(reqs);
+    try {
+        const suggs = await getAISuggestions(reqs);
+        setSuggestions(suggs);
+    } catch (error) {
+        console.error("Failed to regenerate AI suggestions", error);
+        // Handle error state in UI
+    } finally {
+        setIsLoading(false);
+    }
+  };
+
+  const handleGenerateMore = async () => {
+    setIsGeneratingMore(true);
+    try {
+        const moreSuggestions = await getMoreAISuggestions();
+        setSuggestions(prev => [...prev, ...moreSuggestions]);
+    } catch (error) {
+        console.error("Failed to get more AI suggestions", error);
+    } finally {
+        setIsGeneratingMore(false);
+    }
+  };
+
 
   const handleGenerateFromStep2 = async (finalSuggestions: AISuggestion[]) => {
       setIsLoading(true);
@@ -63,7 +90,6 @@ const AIGenerateModal: React.FC<AIGenerateModalProps> = ({ isOpen, onClose, dire
         setRequirements('');
         setSelectedDirectory('');
         setSuggestions([]);
-        setSelectedSuggestions(new Set());
         setGeneratedCount(0);
     }, 300); // Delay to allow animation
     onClose(didGenerate);
@@ -78,7 +104,7 @@ const AIGenerateModal: React.FC<AIGenerateModalProps> = ({ isOpen, onClose, dire
       onClick={() => handleClose()}
     >
       <div
-        className="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-3xl transform transition-all"
+        className="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-6xl transform transition-all"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="p-6">
@@ -109,9 +135,18 @@ const AIGenerateModal: React.FC<AIGenerateModalProps> = ({ isOpen, onClose, dire
             </div>
 
             {/* Step Content */}
-            <div className="min-h-[600px] flex flex-col">
+            <div className="h-[580px] flex flex-col">
                 {currentStep === 1 && <Step1DefineRequirement onContinue={handleContinueFromStep1} directories={directories} isLoading={isLoading} />}
-                {currentStep === 2 && <Step2ReviewAndSelect onGenerate={handleGenerateFromStep2} suggestions={suggestions} requirements={requirements} />}
+                {currentStep === 2 && <Step2ReviewAndSelect 
+                    onGenerate={handleGenerateFromStep2} 
+                    suggestions={suggestions} 
+                    requirements={requirements}
+                    onRegenerate={handleRegenerate}
+                    isRegenerating={isLoading}
+                    onGenerateMore={handleGenerateMore}
+                    isGeneratingMore={isGeneratingMore}
+                    onCancel={() => handleClose(false)}
+                />}
                 {currentStep === 3 && <Step3Complete onClose={() => handleClose(true)} generatedCount={generatedCount} directoryName={selectedDirectory} />}
             </div>
         </div>
