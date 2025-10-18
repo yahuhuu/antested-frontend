@@ -152,13 +152,18 @@ const Step2ReviewAndSelect: React.FC<Step2Props> = ({
     // --- Attachment Handlers ---
     const MAX_FILE_SIZE = 100 * 1024 * 1024; // 100 MB
 
+    // FIX: The for...of loop over a FileList was causing type inference issues in strict environments,
+    // leading to the iterated 'file' variable being treated as 'unknown'. Switching to a standard
+    // for loop with an index ensures that 'files[i]' is correctly typed as a 'File' object, resolving
+    // errors where file properties were inaccessible.
     const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
         if (!event.target.files) return;
 
-        const newFiles = Array.from(event.target.files);
+        const files = event.target.files;
         const validFiles: File[] = [];
         
-        for (const file of newFiles) {
+        for (let i = 0; i < files.length; i++) {
+            const file = files[i];
             if (file.size > MAX_FILE_SIZE) {
                 alert(`File "${file.name}" is too large. The maximum size is 100 MB.`);
             } else {
