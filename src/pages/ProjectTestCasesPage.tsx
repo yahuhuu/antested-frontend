@@ -195,7 +195,7 @@ const ProjectTestCasesPage: React.FC = () => {
                 />
 
                 {/* Main Content */}
-                <div className="flex-1 flex flex-col bg-white dark:bg-gray-800 rounded-lg shadow-md">
+                <div className="flex-1 flex flex-col bg-white dark:bg-gray-800 rounded-lg shadow-md min-w-0">
                     <div className="p-4 sm:p-6 border-b border-gray-200 dark:border-gray-700">
                         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                             <h1 className="text-2xl font-bold text-gray-800 dark:text-white">Test Cases</h1>
@@ -253,7 +253,7 @@ const ProjectTestCasesPage: React.FC = () => {
                         </div>
                     </div>
                     
-                    <div className="flex-1 overflow-y-auto">
+                    <div className="flex-1 overflow-auto">
                     <TestCaseTable 
                             testCases={testCases} 
                             loading={loading} 
