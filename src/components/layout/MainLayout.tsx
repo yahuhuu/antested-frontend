@@ -3,13 +3,15 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Outlet, Link, useMatch } from 'react-router-dom';
 import { useTheme } from '../../hooks/useTheme';
 import ProjectSidebar from './ProjectSidebar';
-import { SunIcon, MoonIcon, BellIcon, UserIcon } from '../ui/Icons';
+import AdminSidebar from './AdminSidebar';
+import { SunIcon, MoonIcon, BellIcon, UserIcon, SettingsIcon } from '../ui/Icons';
 
 const MainLayout: React.FC = () => {
     const { theme, toggleTheme } = useTheme();
     const [isProfileOpen, setIsProfileOpen] = useState(false);
     const profileRef = useRef<HTMLDivElement>(null);
     const isProjectPage = useMatch('/projects/:projectId/*');
+    const isAdminPage = useMatch('/admin/*');
 
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
@@ -56,6 +58,16 @@ const MainLayout: React.FC = () => {
                         <BellIcon className="w-5 h-5" />
                         <span className="absolute top-1 right-1 block h-2 w-2 rounded-full bg-red-500 ring-2 ring-white dark:ring-gray-800"></span>
                     </button>
+                    
+                    <Link
+                        to="/admin/projects"
+                        className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300 hover:bg-blue-200 dark:hover:bg-blue-900 transition-colors"
+                        aria-label="Admin Settings"
+                        title="Admin Settings"
+                    >
+                        <SettingsIcon className="w-5 h-5" />
+                        <span className="font-semibold text-sm">Admin</span>
+                    </Link>
 
                     <div className="relative" ref={profileRef}>
                         <button onClick={() => setIsProfileOpen(!isProfileOpen)} className="flex items-center space-x-3 p-1 rounded-md hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors">
@@ -70,19 +82,22 @@ const MainLayout: React.FC = () => {
 
                         {isProfileOpen && (
                             <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-md shadow-lg py-1 border dark:border-gray-700 animate-fade-in-down">
-                                <Link to="#" className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">
-                                    My Setting
+                                <Link to="#" className="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">
+                                    <UserIcon className="w-4 h-4" /> Profile
                                 </Link>
+                                <div className="border-t border-gray-200 dark:border-gray-700 my-1"></div>
                                 <a href="#" className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">
                                     Logout
                                 </a>
                             </div>
                         )}
                     </div>
+
                 </div>
             </header>
             <div className="flex flex-1 overflow-hidden">
                 {isProjectPage && <ProjectSidebar />}
+                {isAdminPage && <AdminSidebar />}
                 <main className="flex-1 overflow-y-auto bg-gray-50 dark:bg-gray-900 p-4">
                     <Outlet />
                 </main>

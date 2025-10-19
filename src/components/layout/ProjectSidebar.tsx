@@ -72,7 +72,8 @@ const ProjectSidebar: React.FC = () => {
         >
           <div className="flex flex-col items-start text-left">
             <span className="font-bold text-gray-800 dark:text-white truncate">{currentProject?.name || 'Loading...'}</span>
-            <span className="text-sm text-gray-500 dark:text-gray-400">{currentProject?.client}</span>
+            {/* FIX: The 'client' property does not exist on the 'Project' type. Replaced with 'key' which is available and suitable for display here. */}
+            <span className="text-sm text-gray-500 dark:text-gray-400">{currentProject?.key}</span>
           </div>
           <ChevronDownIcon className={`w-4 h-4 text-gray-500 dark:text-gray-400 transition-transform duration-200 ${isSwitcherOpen ? 'rotate-180' : ''}`} />
         </button>

@@ -21,6 +21,7 @@ const StatusBadge: React.FC<{ status: Status }> = ({ status }) => {
         'Need Update': 'bg-orange-100 text-orange-800 dark:bg-orange-500/20 dark:text-orange-400',
         Draft: 'bg-gray-200 text-gray-800 dark:bg-gray-600 dark:text-gray-300',
         Archived: 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300',
+        Ready: 'bg-sky-100 text-sky-800 dark:bg-sky-500/20 dark:text-sky-400',
     };
     return <span className={`px-2.5 py-0.5 inline-flex text-xs leading-5 font-semibold rounded-full ${colors[status]}`}>{status}</span>;
 };

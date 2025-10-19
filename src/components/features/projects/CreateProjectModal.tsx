@@ -29,12 +29,22 @@ const CreateProjectModal: React.FC<CreateProjectModalProps> = ({ isOpen, onClose
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     if (!name.trim() || !key.trim()) {
-      setError('Nama Proyek dan Key Proyek tidak boleh kosong.');
+      setError('Project Name and Key cannot be empty.');
       return;
     }
     setError('');
     setIsSaving(true);
-    await onSave({ name, key });
+    
+    // Updated to match the new NewProject type
+    await onSave({ 
+      name, 
+      key, 
+      description: '', 
+      enableApprovals: false, 
+      users: [], 
+      groups: [] 
+    });
+    
     setIsSaving(false); // onSave should handle closing, but we reset state here
   };
 
@@ -57,13 +67,13 @@ const CreateProjectModal: React.FC<CreateProjectModalProps> = ({ isOpen, onClose
         <div className="p-6">
           <div className="flex justify-between items-start">
             <h2 id="modal-title" className="text-2xl font-bold text-gray-800 dark:text-white">
-              Buat Proyek Baru
+              Create New Project
             </h2>
             <button
               onClick={onClose}
               disabled={isSaving}
               className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition"
-              aria-label="Tutup"
+              aria-label="Close"
             >
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path></svg>
             </button>
@@ -72,7 +82,7 @@ const CreateProjectModal: React.FC<CreateProjectModalProps> = ({ isOpen, onClose
           <form onSubmit={handleSubmit} className="mt-6 space-y-4">
             <div>
               <label htmlFor="projectName" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                Nama Proyek
+                Project Name
               </label>
               <input
                 type="text"
@@ -80,13 +90,13 @@ const CreateProjectModal: React.FC<CreateProjectModalProps> = ({ isOpen, onClose
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 className="mt-1 block w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-2 dark:focus:ring-offset-gray-800 focus:ring-blue-500 dark:focus:ring-blue-400 sm:text-sm"
-                placeholder="Contoh: Proyek Website Klien"
+                placeholder="e.g., Client Website Project"
                 required
               />
             </div>
             <div>
               <label htmlFor="projectKey" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                Key Proyek
+                Project Key
               </label>
               <input
                 type="text"
@@ -94,11 +104,11 @@ const CreateProjectModal: React.FC<CreateProjectModalProps> = ({ isOpen, onClose
                 value={key}
                 onChange={(e) => setKey(e.target.value.toUpperCase())}
                 className="mt-1 block w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-2 dark:focus:ring-offset-gray-800 focus:ring-blue-500 dark:focus:ring-blue-400 sm:text-sm"
-                placeholder="Contoh: PWK"
+                placeholder="e.g., CWP"
                 maxLength={5}
                 required
               />
-              <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">Singkatan unik, maksimal 5 karakter.</p>
+              <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">A unique abbreviation, max 5 characters.</p>
             </div>
             
             {error && <p className="text-sm text-red-600">{error}</p>}
@@ -110,7 +120,7 @@ const CreateProjectModal: React.FC<CreateProjectModalProps> = ({ isOpen, onClose
                 disabled={isSaving}
                 className="px-4 py-2 bg-gray-200 text-gray-800 dark:bg-gray-700 dark:text-gray-200 font-semibold rounded-lg shadow-sm hover:bg-gray-300 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 dark:focus:ring-offset-gray-800 focus:ring-gray-400 dark:focus:ring-gray-500 disabled:opacity-50 transition"
               >
-                Batal
+                Cancel
               </button>
               <button
                 type="submit"
@@ -123,7 +133,7 @@ const CreateProjectModal: React.FC<CreateProjectModalProps> = ({ isOpen, onClose
                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                   </svg>
                 ) : (
-                  'Simpan'
+                  'Save'
                 )}
               </button>
             </div>

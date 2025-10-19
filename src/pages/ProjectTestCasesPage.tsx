@@ -2,6 +2,7 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useParams } from 'react-router-dom';
 import { getTestCases, TestCase, deleteTestCases } from '../services/testCaseService';
+import { getProjectById, Project } from '../services/projectService';
 import { TestCaseDirectory, DirectoryNode } from '../components/features/test-cases/TestCaseDirectory';
 import { TestCaseTable } from '../components/features/test-cases/TestCaseTable';
 import { Pagination } from '../components/features/test-cases/Pagination';
@@ -38,6 +39,7 @@ const initialUserDirectories: DirectoryNode[] = [
 
 const ProjectTestCasesPage: React.FC = () => {
     const { projectId } = useParams<{ projectId: string }>();
+    const [project, setProject] = useState<Project | null>(null);
     const [testCases, setTestCases] = useState<TestCase[]>([]);
     const [totalCases, setTotalCases] = useState(0);
     const [loading, setLoading] = useState(true);
@@ -68,12 +70,19 @@ const ProjectTestCasesPage: React.FC = () => {
     const [isAIGenerateModalOpen, setIsAIGenerateModalOpen] = useState(false);
 
 
-    const fetchTestCases = useCallback(async () => {
+    const fetchAllData = useCallback(async () => {
         if (!projectId) return;
         try {
             setLoading(true);
             setError('');
             
+            // Fetch project details first to determine approval workflow
+            const projectData = await getProjectById(projectId);
+            setProject(projectData || null);
+            if (!projectData) {
+                throw new Error("Project not found");
+            }
+
             const effectiveFilters = { ...filters };
             let directoryFilter = activeDirectory;
 
@@ -104,8 +113,8 @@ const ProjectTestCasesPage: React.FC = () => {
     }, [projectId, filters, currentPage, rowsPerPage, activeDirectory]);
 
     useEffect(() => {
-        fetchTestCases();
-    }, [fetchTestCases]);
+        fetchAllData();
+    }, [fetchAllData]);
     
     // Reset page to 1 when filters change
     useEffect(() => {
@@ -137,7 +146,7 @@ const ProjectTestCasesPage: React.FC = () => {
         try {
             await deleteTestCases(Array.from(casesToDelete));
             // Refresh data
-            await fetchTestCases();
+            await fetchAllData();
             setSelectedCases(new Set());
         } catch (err) {
             console.error("Failed to delete test cases:", err);
@@ -175,13 +184,17 @@ const ProjectTestCasesPage: React.FC = () => {
         setIsAIGenerateModalOpen(false);
         if (didGenerate) {
             // Refresh test cases if AI generated new ones
-            fetchTestCases();
+            fetchAllData();
         }
     };
 
 
     const totalPages = useMemo(() => Math.ceil(totalCases / rowsPerPage), [totalCases, rowsPerPage]);
     const areAllVisibleSelected = selectedCases.size > 0 && testCases.length > 0 && testCases.every(tc => selectedCases.has(tc.id));
+    
+    const statusOptions = project?.enableApprovals
+        ? ['Draft', 'In Review', 'Approved', 'Need Update']
+        : ['Draft', 'Ready'];
 
     return (
         <>
@@ -221,10 +234,9 @@ const ProjectTestCasesPage: React.FC = () => {
                             <div className="relative w-full sm:w-auto">
                                 <select className="w-full appearance-none pl-4 pr-10 py-1 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" value={filters.status} onChange={(e) => setFilters(prev => ({ ...prev, status: e.target.value }))}>
                                     <option value="All">Status: All</option>
-                                    <option value="Draft">Draft</option>
-                                    <option value="In Review">In Review</option>
-                                    <option value="Approved">Approved</option>
-                                    <option value="Need Update">Need Update</option>
+                                    {statusOptions.map(status => (
+                                        <option key={status} value={status}>{status}</option>
+                                    ))}
                                 </select>
                                 <ChevronDownIcon className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" />
                             </div>

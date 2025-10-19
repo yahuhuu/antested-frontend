@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getProjects, createProject, Project, NewProject } from '../services/projectService';
-import CreateProjectModal from '../components/features/projects/CreateProjectModal';
+import ProjectFormModal from '../components/features/admin/projects/ProjectFormModal';
 
 const ProjectsPage: React.FC = () => {
   const [projects, setProjects] = useState<Project[]>([]);
@@ -29,9 +29,12 @@ const ProjectsPage: React.FC = () => {
     fetchProjects();
   }, [fetchProjects]);
 
-  const handleSaveProject = async (projectData: NewProject) => {
+  const handleSaveProject = async (projectData: NewProject | Project) => {
     try {
-      await createProject(projectData);
+      // This page only handles creation, so we check that it's a new project
+      if (!('id' in projectData)) {
+        await createProject(projectData as NewProject);
+      }
       setIsModalOpen(false);
       await fetchProjects();
     } catch (saveError) {
@@ -101,10 +104,11 @@ const ProjectsPage: React.FC = () => {
       
       {renderContent()}
 
-      <CreateProjectModal
+      <ProjectFormModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         onSave={handleSaveProject}
+        project={null}
       />
     </>
   );
