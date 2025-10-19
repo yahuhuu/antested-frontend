@@ -28,7 +28,7 @@ const MainLayout: React.FC = () => {
     return (
         <div className="flex flex-col h-screen bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100">
             <header className="bg-white dark:bg-gray-800 shadow-md p-4 flex-shrink-0 flex justify-between items-center z-20">
-                <h1 className="text-2xl font-bold text-gray-800 dark:text-white">Test Case Manager</h1>
+                <h1 className="text-2xl font-bold text-gray-800 dark:text-white">Antested</h1>
 
                 <div className="flex items-center space-x-4">
                     <button
