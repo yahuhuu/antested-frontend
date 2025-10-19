@@ -78,7 +78,7 @@ const GroupFormModal: React.FC<GroupFormModalProps> = ({ isOpen, onClose, onSave
           <div className="flex flex-col flex-grow min-h-0">
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Users</label>
             <div className="border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 flex flex-col flex-grow min-h-0">
-                <div className="flex-grow overflow-y-auto p-2 space-y-2">
+                <div className="h-44 overflow-y-auto p-2 space-y-2">
                     {selectedUsers.length > 0 ? selectedUsers.map(user => (
                         <div key={user.id} className="flex items-center justify-between bg-gray-100 dark:bg-gray-800/50 p-2 rounded-md">
                             <div className="flex items-center gap-3">

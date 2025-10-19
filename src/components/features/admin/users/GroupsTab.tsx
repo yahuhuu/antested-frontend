@@ -1,5 +1,6 @@
 // Path: src/components/features/admin/users/GroupsTab.tsx
-import React, { useState, useEffect, useRef, useMemo } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
+import ReactDOM from 'react-dom';
 import { getGroups, Group } from '../../../../services/userService';
 import { SearchIcon, PlusIcon, EllipsisIcon, EditIcon, TrashIcon } from '../../../ui/Icons';
 import { Pagination } from '../../../ui/Pagination';
@@ -11,7 +12,7 @@ const GroupsTab: React.FC = () => {
     const [loading, setLoading] = useState(true);
     const [search, setSearch] = useState('');
     const [openMenu, setOpenMenu] = useState<string | null>(null);
-    const menuRef = useRef<HTMLDivElement>(null);
+    const [menuPosition, setMenuPosition] = useState<{ top: number; left: number } | null>(null);
 
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -31,18 +32,40 @@ const GroupsTab: React.FC = () => {
     }, []);
     
     useEffect(() => {
-        const handleClickOutside = (event: MouseEvent) => {
-            if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
-                setOpenMenu(null);
-            }
+        const handleClose = () => {
+            setOpenMenu(null);
+            setMenuPosition(null);
         };
-        document.addEventListener('mousedown', handleClickOutside);
-        return () => document.removeEventListener('mousedown', handleClickOutside);
-      }, []);
+
+        if (openMenu) {
+            document.addEventListener('mousedown', handleClose);
+            window.addEventListener('scroll', handleClose, true);
+        }
+
+        return () => {
+            document.removeEventListener('mousedown', handleClose);
+            window.removeEventListener('scroll', handleClose, true);
+        };
+    }, [openMenu]);
 
     useEffect(() => {
         setCurrentPage(1);
     }, [search, rowsPerPage]);
+
+    const handleMenuToggle = (e: React.MouseEvent<HTMLButtonElement>, groupId: string) => {
+        e.stopPropagation();
+        if (openMenu === groupId) {
+            setOpenMenu(null);
+            setMenuPosition(null);
+        } else {
+            const rect = e.currentTarget.getBoundingClientRect();
+            setMenuPosition({
+                top: rect.top + window.scrollY,
+                left: rect.right + window.scrollX,
+            });
+            setOpenMenu(groupId);
+        }
+    };
 
     const handleAddGroup = () => {
         setSelectedGroup(null);
@@ -80,6 +103,8 @@ const GroupsTab: React.FC = () => {
         const end = start + rowsPerPage;
         return filteredGroups.slice(start, end);
     }, [filteredGroups, currentPage, rowsPerPage]);
+
+    const groupForMenu = openMenu ? groups.find(g => g.id === openMenu) : null;
 
     return (
         <>
@@ -122,16 +147,8 @@ const GroupsTab: React.FC = () => {
                                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">{group.name}</td>
                                         <td className="px-6 py-4 text-sm text-gray-500 dark:text-gray-300 truncate max-w-sm">{group.description}</td>
                                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">{group.users.length}</td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium relative">
-                                            <button onClick={() => setOpenMenu(openMenu === group.id ? null : group.id)} className="text-gray-500 hover:text-gray-800 dark:hover:text-gray-200 p-1 rounded-full"><EllipsisIcon /></button>
-                                            {openMenu === group.id && (
-                                                <div ref={menuRef} className="absolute right-8 top-full z-10 mt-2 w-36 bg-white dark:bg-gray-800 rounded-md shadow-lg border dark:border-gray-700">
-                                                    <ul className="py-1 text-sm text-gray-700 dark:text-gray-200">
-                                                        <li onClick={() => handleEditGroup(group)} className="flex items-center gap-3 px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer"><EditIcon className="w-4 h-4" /> Edit</li>
-                                                        <li onClick={() => handleDeleteGroup(group)} className="flex items-center gap-3 px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 text-red-600 dark:text-red-400 cursor-pointer"><TrashIcon className="w-4 h-4" /> Delete</li>
-                                                    </ul>
-                                                </div>
-                                            )}
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                            <button onClick={(e) => handleMenuToggle(e, group.id)} className="text-gray-500 hover:text-gray-800 dark:hover:text-gray-200 p-1 rounded-full"><EllipsisIcon /></button>
                                         </td>
                                     </tr>
                                 ))
@@ -148,6 +165,25 @@ const GroupsTab: React.FC = () => {
                     onRowsPerPageChange={setRowsPerPage}
                 />
             </div>
+
+            {openMenu && menuPosition && groupForMenu && ReactDOM.createPortal(
+                <div
+                    onClick={e => e.stopPropagation()}
+                    style={{
+                        position: 'absolute',
+                        top: `${menuPosition.top}px`,
+                        left: `${menuPosition.left}px`,
+                        transform: 'translate(-100%, -100%)',
+                    }}
+                    className="z-50 w-36 bg-white dark:bg-gray-800 rounded-md shadow-lg border dark:border-gray-700"
+                >
+                    <ul className="py-1 text-sm text-gray-700 dark:text-gray-200">
+                        <li onClick={() => handleEditGroup(groupForMenu)} className="flex items-center gap-3 px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer"><EditIcon className="w-4 h-4" /> Edit</li>
+                        <li onClick={() => handleDeleteGroup(groupForMenu)} className="flex items-center gap-3 px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 text-red-600 dark:text-red-400 cursor-pointer"><TrashIcon className="w-4 h-4" /> Delete</li>
+                    </ul>
+                </div>,
+                document.body
+            )}
 
             <GroupFormModal
                 isOpen={isModalOpen}

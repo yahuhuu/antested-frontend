@@ -1,5 +1,6 @@
 // Path: src/components/features/test-cases/TestCaseTable.tsx
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
+import ReactDOM from 'react-dom';
 import { TestCase, Priority, Status } from '../../../services/testCaseService';
 import { EllipsisIcon, EditIcon, DuplicateIcon, TrashIcon } from '../../ui/Icons';
 import { Checkbox } from '../../ui/Checkbox';
@@ -50,22 +51,47 @@ export const TestCaseTable: React.FC<TestCaseTableProps> = ({
 }) => {
     const tableHeaders = ["Case ID", "Name", "Directory", "Priority", "Status", "Assignee", "Actions"];
     const [openMenu, setOpenMenu] = useState<string | null>(null);
-    const menuRef = useRef<HTMLDivElement>(null);
+    const [menuPosition, setMenuPosition] = useState<{ top: number; left: number } | null>(null);
 
     useEffect(() => {
-        const handleClickOutside = (event: MouseEvent) => {
-            if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
-                setOpenMenu(null);
-            }
+        const handleClose = () => {
+            setOpenMenu(null);
+            setMenuPosition(null);
         };
-        document.addEventListener('mousedown', handleClickOutside);
-        return () => document.removeEventListener('mousedown', handleClickOutside);
-    }, []);
+        if (openMenu) {
+            document.addEventListener('mousedown', handleClose);
+            window.addEventListener('scroll', handleClose, true);
+        }
+        return () => {
+            document.removeEventListener('mousedown', handleClose);
+            window.removeEventListener('scroll', handleClose, true);
+        };
+    }, [openMenu]);
     
     // Close menu when data changes to prevent orphan menus
     useEffect(() => {
         setOpenMenu(null);
     }, [testCases]);
+    
+    const handleMenuToggle = (e: React.MouseEvent<HTMLButtonElement>, testCaseId: string) => {
+        e.stopPropagation();
+        if (openMenu === testCaseId) {
+            setOpenMenu(null);
+            setMenuPosition(null);
+        } else {
+            const rect = e.currentTarget.getBoundingClientRect();
+            setMenuPosition({
+                top: rect.top + window.scrollY,
+                left: rect.right + window.scrollX,
+            });
+            setOpenMenu(testCaseId);
+        }
+    };
+
+    const handleDeleteClick = (id: string) => {
+        onDelete(id);
+        setOpenMenu(null);
+    };
 
     const renderContent = () => {
         if (loading) return (
@@ -87,39 +113,54 @@ export const TestCaseTable: React.FC<TestCaseTableProps> = ({
                 <td className="px-4 py-3 whitespace-nowrap"><PriorityBadge priority={tc.priority} /></td>
                 <td className="px-4 py-3 whitespace-nowrap"><StatusBadge status={tc.status} /></td>
                 <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-600 dark:text-gray-300">{tc.assignee}</td>
-                <td className="px-4 py-3 text-center relative">
-                    <button onClick={() => setOpenMenu(openMenu === tc.id ? null : tc.id)} className="text-gray-500 hover:text-gray-800 dark:hover:text-gray-200 p-1 rounded-full hover:bg-gray-200 dark:hover:bg-gray-600">
+                <td className="px-4 py-3 text-center">
+                    <button onClick={(e) => handleMenuToggle(e, tc.id)} className="text-gray-500 hover:text-gray-800 dark:hover:text-gray-200 p-1 rounded-full hover:bg-gray-200 dark:hover:bg-gray-600">
                         <EllipsisIcon />
                     </button>
-                    {openMenu === tc.id && (
-                         <div ref={menuRef} className="absolute right-8 top-full z-20 mt-2 w-36 bg-white dark:bg-gray-800 rounded-md shadow-lg border dark:border-gray-700">
-                            <ul className="py-1 text-sm text-gray-700 dark:text-gray-200">
-                                <li className="flex items-center gap-3 px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer"><EditIcon className="w-4 h-4" /> Edit</li>
-                                <li className="flex items-center gap-3 px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer"><DuplicateIcon className="w-4 h-4" /> Duplicate</li>
-                                <li onClick={() => onDelete(tc.id)} className="flex items-center gap-3 px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 text-red-600 dark:text-red-400 cursor-pointer"><TrashIcon className="w-4 h-4" /> Delete</li>
-                            </ul>
-                        </div>
-                    )}
                 </td>
             </tr>
         ));
     };
+    
+    const testCaseForMenu = openMenu ? testCases.find(tc => tc.id === openMenu) : null;
 
     return (
-        <table className="min-w-full">
-            <thead className="sticky top-0 z-10 bg-gray-50 dark:bg-gray-800">
-                <tr>
-                    <th className="px-4 py-4 w-12"><Checkbox id="cb-all" checked={areAllVisibleSelected} onChange={e => onSelectAll(e.target.checked)} /></th>
-                    {tableHeaders.map(header => (
-                        <th key={header} scope="col" className="px-4 py-4 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                            {header}
-                        </th>
-                    ))}
-                </tr>
-            </thead>
-            <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-                {renderContent()}
-            </tbody>
-        </table>
+        <>
+            <table className="min-w-full">
+                <thead className="sticky top-0 z-10 bg-gray-50 dark:bg-gray-800">
+                    <tr>
+                        <th className="px-4 py-4 w-12"><Checkbox id="cb-all" checked={areAllVisibleSelected} onChange={e => onSelectAll(e.target.checked)} /></th>
+                        {tableHeaders.map(header => (
+                            <th key={header} scope="col" className="px-4 py-4 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                                {header}
+                            </th>
+                        ))}
+                    </tr>
+                </thead>
+                <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                    {renderContent()}
+                </tbody>
+            </table>
+            
+            {openMenu && menuPosition && testCaseForMenu && ReactDOM.createPortal(
+                 <div
+                    onClick={e => e.stopPropagation()}
+                    style={{
+                        position: 'absolute',
+                        top: `${menuPosition.top}px`,
+                        left: `${menuPosition.left}px`,
+                        transform: 'translate(-100%, -100%)',
+                    }}
+                    className="z-50 w-36 bg-white dark:bg-gray-800 rounded-md shadow-lg border dark:border-gray-700"
+                >
+                    <ul className="py-1 text-sm text-gray-700 dark:text-gray-200">
+                        <li className="flex items-center gap-3 px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer"><EditIcon className="w-4 h-4" /> Edit</li>
+                        <li className="flex items-center gap-3 px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer"><DuplicateIcon className="w-4 h-4" /> Duplicate</li>
+                        <li onClick={() => handleDeleteClick(testCaseForMenu.id)} className="flex items-center gap-3 px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 text-red-600 dark:text-red-400 cursor-pointer"><TrashIcon className="w-4 h-4" /> Delete</li>
+                    </ul>
+                </div>,
+                document.body
+            )}
+        </>
     );
 };

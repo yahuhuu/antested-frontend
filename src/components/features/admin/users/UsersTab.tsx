@@ -1,5 +1,6 @@
 // Path: src/components/features/admin/users/UsersTab.tsx
-import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import ReactDOM from 'react-dom';
 import { getUsers, User, activateUser, deactivateUser, deleteUser } from '../../../../services/userService';
 import { SearchIcon, PlusIcon, EllipsisIcon, EditIcon, TrashIcon, UserCircleIcon, LockClosedIcon as DeactivateIcon } from '../../../ui/Icons';
 import { Checkbox } from '../../../ui/Checkbox';
@@ -14,7 +15,7 @@ const UsersTab: React.FC = () => {
   const [search, setSearch] = useState('');
   const [selectedUsers, setSelectedUsers] = useState<Set<string>>(new Set());
   const [openMenu, setOpenMenu] = useState<string | null>(null);
-  const menuRef = useRef<HTMLDivElement>(null);
+  const [menuPosition, setMenuPosition] = useState<{ top: number; left: number } | null>(null);
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -41,18 +42,40 @@ const UsersTab: React.FC = () => {
   }, [fetchUsers]);
 
   useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-        if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
-            setOpenMenu(null);
-        }
+    const handleClose = () => {
+        setOpenMenu(null);
+        setMenuPosition(null);
     };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
+
+    if (openMenu) {
+        document.addEventListener('mousedown', handleClose);
+        window.addEventListener('scroll', handleClose, true);
+    }
+
+    return () => {
+        document.removeEventListener('mousedown', handleClose);
+        window.removeEventListener('scroll', handleClose, true);
+    };
+  }, [openMenu]);
 
   useEffect(() => {
     setCurrentPage(1);
   }, [search, rowsPerPage]);
+
+  const handleMenuToggle = (e: React.MouseEvent<HTMLButtonElement>, userId: string) => {
+    e.stopPropagation();
+    if (openMenu === userId) {
+        setOpenMenu(null);
+        setMenuPosition(null);
+    } else {
+        const rect = e.currentTarget.getBoundingClientRect();
+        setMenuPosition({
+            top: rect.top + window.scrollY,
+            left: rect.right + window.scrollX,
+        });
+        setOpenMenu(userId);
+    }
+  };
 
   const handleAddUser = () => {
     setSelectedUser(null);
@@ -124,6 +147,8 @@ const UsersTab: React.FC = () => {
       return filteredUsers.slice(start, end);
   }, [filteredUsers, currentPage, rowsPerPage]);
 
+  const userForMenu = openMenu ? users.find(u => u.id === openMenu) : null;
+
   return (
     <>
       <div className="flex justify-between items-center mb-4">
@@ -183,20 +208,8 @@ const UsersTab: React.FC = () => {
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">{user.lastActive}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium relative">
-                      <button onClick={() => setOpenMenu(openMenu === user.id ? null : user.id)} className="text-gray-500 hover:text-gray-800 dark:hover:text-gray-200 p-1 rounded-full"><EllipsisIcon /></button>
-                       {openMenu === user.id && (
-                           <div ref={menuRef} className="absolute right-8 top-full z-10 mt-2 w-48 bg-white dark:bg-gray-800 rounded-md shadow-lg border dark:border-gray-700">
-                              <ul className="py-1 text-sm text-gray-700 dark:text-gray-200">
-                                  <li onClick={() => handleEditUser(user)} className="flex items-center gap-3 px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer"><EditIcon className="w-4 h-4" /> Edit</li>
-                                  <li onClick={() => handleToggleUserStatus(user)} className="flex items-center gap-3 px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer">
-                                    {user.status === 'Active' ? <DeactivateIcon className="w-4 h-4" /> : <UserCircleIcon className="w-4 h-4" />}
-                                    {user.status === 'Active' ? 'Deactivate' : 'Activate'} User
-                                  </li>
-                                  <li onClick={() => handleDeleteUser(user)} className="flex items-center gap-3 px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 text-red-600 dark:text-red-400 cursor-pointer"><TrashIcon className="w-4 h-4" /> Delete User</li>
-                              </ul>
-                          </div>
-                      )}
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                      <button onClick={(e) => handleMenuToggle(e, user.id)} className="text-gray-500 hover:text-gray-800 dark:hover:text-gray-200 p-1 rounded-full"><EllipsisIcon /></button>
                     </td>
                   </tr>
                 ))
@@ -213,6 +226,29 @@ const UsersTab: React.FC = () => {
           onRowsPerPageChange={setRowsPerPage}
         />
       </div>
+
+      {openMenu && menuPosition && userForMenu && ReactDOM.createPortal(
+        <div
+            onClick={e => e.stopPropagation()}
+            style={{
+                position: 'absolute',
+                top: `${menuPosition.top}px`,
+                left: `${menuPosition.left}px`,
+                transform: 'translate(-100%, -100%)',
+            }}
+            className="z-50 w-48 bg-white dark:bg-gray-800 rounded-md shadow-lg border dark:border-gray-700"
+        >
+            <ul className="py-1 text-sm text-gray-700 dark:text-gray-200">
+                <li onClick={() => handleEditUser(userForMenu)} className="flex items-center gap-3 px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer"><EditIcon className="w-4 h-4" /> Edit</li>
+                <li onClick={() => handleToggleUserStatus(userForMenu)} className="flex items-center gap-3 px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer">
+                  {userForMenu.status === 'Active' ? <DeactivateIcon className="w-4 h-4" /> : <UserCircleIcon className="w-4 h-4" />}
+                  {userForMenu.status === 'Active' ? 'Deactivate' : 'Activate'} User
+                </li>
+                <li onClick={() => handleDeleteUser(userForMenu)} className="flex items-center gap-3 px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 text-red-600 dark:text-red-400 cursor-pointer"><TrashIcon className="w-4 h-4" /> Delete User</li>
+            </ul>
+        </div>,
+        document.body
+      )}
 
       <UserFormModal
         isOpen={isModalOpen}
