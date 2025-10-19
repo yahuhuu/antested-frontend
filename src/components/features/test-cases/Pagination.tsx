@@ -44,7 +44,7 @@ export const Pagination: React.FC<PaginationProps> = ({
   const endItem = Math.min(currentPage * rowsPerPage, totalItems);
 
   return (
-    <div className="flex flex-wrap items-center justify-between p-4 border-t border-gray-200 dark:border-gray-700 text-sm text-gray-600 dark:text-gray-400 gap-4">
+    <div className="flex flex-wrap items-center justify-between p-4 border-t border-gray-200 dark:border-gray-700 text-xs text-gray-600 dark:text-gray-400 gap-4">
       <div className="flex-shrink-0">
         <span>{startItem}-{endItem} of {totalItems} items</span>
       </div>

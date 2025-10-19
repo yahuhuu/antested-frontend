@@ -214,12 +214,12 @@ const ProjectTestCasesPage: React.FC = () => {
                                 <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
                                 <input
                                     type="text" placeholder="Search cases..."
-                                    className="w-full pl-10 pr-4 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                    className="w-full pl-10 pr-4 py-1 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                                     value={filters.search} onChange={(e) => setFilters(prev => ({...prev, search: e.target.value}))}
                                 />
                             </div>
                             <div className="relative w-full sm:w-auto">
-                                <select className="w-full appearance-none pl-4 pr-10 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" value={filters.status} onChange={(e) => setFilters(prev => ({ ...prev, status: e.target.value }))}>
+                                <select className="w-full appearance-none pl-4 pr-10 py-1 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" value={filters.status} onChange={(e) => setFilters(prev => ({ ...prev, status: e.target.value }))}>
                                     <option value="All">Status: All</option>
                                     <option value="Draft">Draft</option>
                                     <option value="In Review">In Review</option>
@@ -229,7 +229,7 @@ const ProjectTestCasesPage: React.FC = () => {
                                 <ChevronDownIcon className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" />
                             </div>
                             <div className="relative w-full sm:w-auto">
-                                <select className="w-full appearance-none pl-4 pr-10 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" value={filters.priority} onChange={(e) => setFilters(prev => ({ ...prev, priority: e.target.value }))}>
+                                <select className="w-full appearance-none pl-4 pr-10 py-1 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" value={filters.priority} onChange={(e) => setFilters(prev => ({ ...prev, priority: e.target.value }))}>
                                     <option value="All">Priority: All</option>
                                     <option value="Critical">Critical</option>
                                     <option value="High">High</option>
@@ -239,7 +239,7 @@ const ProjectTestCasesPage: React.FC = () => {
                                 <ChevronDownIcon className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" />
                             </div>
                             <div className="relative w-full sm:w-auto">
-                                <select className="w-full appearance-none pl-4 pr-10 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" value={filters.assignee} onChange={(e) => setFilters(prev => ({ ...prev, assignee: e.target.value }))}>
+                                <select className="w-full appearance-none pl-4 pr-10 py-1 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" value={filters.assignee} onChange={(e) => setFilters(prev => ({ ...prev, assignee: e.target.value }))}>
                                     <option value="All">Assignee: All</option>
                                     <option value="Admin User">Admin User</option>
                                 </select>
