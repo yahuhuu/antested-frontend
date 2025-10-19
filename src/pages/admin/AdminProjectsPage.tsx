@@ -1,8 +1,9 @@
 // Path: src/pages/admin/AdminProjectsPage.tsx
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Project, getProjects, createProject, updateProject, deleteProject, NewProject } from '../../services/projectService';
 import ProjectFormModal from '../../components/features/admin/projects/ProjectFormModal';
 import DeleteProjectModal from '../../components/features/admin/projects/DeleteProjectModal';
+import { Pagination } from '../../components/ui/Pagination';
 import { PlusIcon, EditIcon, TrashIcon } from '../../components/ui/Icons';
 
 const AdminProjectsPage: React.FC = () => {
@@ -14,6 +15,9 @@ const AdminProjectsPage: React.FC = () => {
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
     
     const [selectedProject, setSelectedProject] = useState<Project | null>(null);
+
+    const [currentPage, setCurrentPage] = useState(1);
+    const [rowsPerPage, setRowsPerPage] = useState(10);
 
     const fetchProjects = useCallback(async () => {
         try {
@@ -32,6 +36,10 @@ const AdminProjectsPage: React.FC = () => {
     useEffect(() => {
         fetchProjects();
     }, [fetchProjects]);
+
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [rowsPerPage]);
 
     const handleOpenCreateModal = () => {
         setSelectedProject(null);
@@ -73,6 +81,14 @@ const AdminProjectsPage: React.FC = () => {
         }
     };
 
+    const totalProjects = projects.length;
+    const totalPages = useMemo(() => Math.ceil(totalProjects / rowsPerPage), [totalProjects, rowsPerPage]);
+    const paginatedProjects = useMemo(() => {
+        const start = (currentPage - 1) * rowsPerPage;
+        const end = start + rowsPerPage;
+        return projects.slice(start, end);
+    }, [projects, currentPage, rowsPerPage]);
+
     return (
         <>
             <div className="flex justify-between items-center mb-6">
@@ -85,42 +101,52 @@ const AdminProjectsPage: React.FC = () => {
                 </button>
             </div>
             
-            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden">
-                <table className="min-w-full">
-                    <thead className="bg-gray-50 dark:bg-gray-700">
-                        <tr>
-                            {['Project Name', 'Key', 'Description', 'Members', 'Actions'].map(header => (
-                                <th key={header} scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                                    {header}
-                                </th>
-                            ))}
-                        </tr>
-                    </thead>
-                    <tbody className="divide-y divide-gray-200 dark:divide-gray-600">
-                        {loading && (
-                            <tr><td colSpan={5} className="text-center p-6 text-gray-500">Loading...</td></tr>
-                        )}
-                        {error && (
-                             <tr><td colSpan={5} className="text-center p-6 text-red-500">{error}</td></tr>
-                        )}
-                        {!loading && !error && projects.map((project) => (
-                            <tr key={project.id}>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">{project.name}</td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm font-mono text-gray-500 dark:text-gray-300">{project.key}</td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300 truncate" style={{ maxWidth: '300px' }} title={project.description}>{project.description}</td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">{project.memberCount}</td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-4">
-                                    <button onClick={() => handleOpenEditModal(project)} className="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-200">
-                                        <EditIcon className="w-5 h-5" />
-                                    </button>
-                                    <button onClick={() => handleOpenDeleteModal(project)} className="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-200">
-                                        <TrashIcon className="w-5 h-5" />
-                                    </button>
-                                </td>
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden flex flex-col">
+                <div className="overflow-x-auto">
+                    <table className="min-w-full">
+                        <thead className="bg-gray-50 dark:bg-gray-700">
+                            <tr>
+                                {['Project Name', 'Key', 'Description', 'Members', 'Actions'].map(header => (
+                                    <th key={header} scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                                        {header}
+                                    </th>
+                                ))}
                             </tr>
-                        ))}
-                    </tbody>
-                </table>
+                        </thead>
+                        <tbody className="divide-y divide-gray-200 dark:divide-gray-600">
+                            {loading && (
+                                <tr><td colSpan={5} className="text-center p-6 text-gray-500">Loading...</td></tr>
+                            )}
+                            {error && (
+                                <tr><td colSpan={5} className="text-center p-6 text-red-500">{error}</td></tr>
+                            )}
+                            {!loading && !error && paginatedProjects.map((project) => (
+                                <tr key={project.id}>
+                                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">{project.name}</td>
+                                    <td className="px-6 py-4 whitespace-nowrap text-sm font-mono text-gray-500 dark:text-gray-300">{project.key}</td>
+                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300 truncate" style={{ maxWidth: '300px' }} title={project.description}>{project.description}</td>
+                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">{project.memberCount}</td>
+                                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-4">
+                                        <button onClick={() => handleOpenEditModal(project)} className="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-200">
+                                            <EditIcon className="w-5 h-5" />
+                                        </button>
+                                        <button onClick={() => handleOpenDeleteModal(project)} className="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-200">
+                                            <TrashIcon className="w-5 h-5" />
+                                        </button>
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
+                 <Pagination
+                    currentPage={currentPage}
+                    totalPages={totalPages}
+                    rowsPerPage={rowsPerPage}
+                    totalItems={totalProjects}
+                    onPageChange={setCurrentPage}
+                    onRowsPerPageChange={setRowsPerPage}
+                />
             </div>
 
             {isFormModalOpen && (
