@@ -1,120 +1,100 @@
-// Path: services/projectService.ts
+// Path: src/services/projectService.ts
+// FIX: Removed local User and Group interfaces and imported them from userService to ensure type consistency.
+import { User, Group } from './userService';
+
 export interface Project {
   id: string;
   name: string;
-  client: string;
   key: string;
+  description: string;
+  enableApprovals: boolean;
+  users: User[];
+  groups: Group[];
+  memberCount: number;
 }
 
-export type NewProject = Omit<Project, 'id' | 'client'> & { client?: string };
+export type NewProject = Omit<Project, 'id' | 'memberCount'>;
 
-// Data tiruan untuk simulasi
 let mockProjects: Project[] = [
-  { id: 'proj-001', name: 'Sistem E-commerce', client: 'Klien A', key: 'ECA' },
-  { id: 'proj-002', name: 'Aplikasi Mobile Banking', client: 'Bank Sejahtera', key: 'MBANK' },
-  { id: 'proj-003', name: 'Platform Analitik Data', client: 'Internal', key: 'PADI' },
-  { id: 'proj-004', name: 'Sistem Manajemen Inventaris', client: 'Gudang Jaya', key: 'SMI' },
+  {
+    id: 'proj-001',
+    name: 'Client Website Redesign',
+    key: 'CWR',
+    description: 'A complete overhaul of the main client-facing website, including new branding and a modern tech stack.',
+    enableApprovals: true,
+    // FIX: Updated user object to match the User interface from userService, which includes an email and avatarUrl.
+    users: [{ id: 'user-1', name: 'Admin User', email: 'admin@example.com', avatarUrl: `https://i.pravatar.cc/40?u=user-1` }],
+    groups: [{ id: 'group-1', name: 'Developers' }],
+    memberCount: 5,
+  },
+  {
+    id: 'proj-002',
+    name: 'Mobile Banking App',
+    key: 'MBA',
+    description: 'Development of a new native mobile application for iOS and Android for personal banking services.',
+    enableApprovals: true,
+    users: [],
+    groups: [],
+    memberCount: 12,
+  },
+  {
+    id: 'proj-003',
+    name: 'Internal CRM Platform',
+    key: 'ICRM',
+    description: 'Building a new customer relationship management tool for the internal sales and support teams.',
+    enableApprovals: false,
+    users: [],
+    groups: [],
+    memberCount: 8,
+  },
+  {
+      id: 'proj-004',
+      name: 'API Gateway Migration',
+      key: 'AGM',
+      description: 'Migrating the existing API gateway to a new, more scalable cloud-native solution.',
+      enableApprovals: true,
+      users: [],
+      groups: [],
+      memberCount: 4,
+  }
 ];
 
-/**
- * Mensimulasikan pengambilan daftar proyek dari API.
- * @returns Sebuah promise yang akan resolve dengan daftar proyek setelah 1.5 detik.
- */
+const simulateDelay = <T,>(data: T): Promise<T> => {
+  return new Promise(resolve => setTimeout(() => resolve(data), 500));
+};
+
 export const getProjects = (): Promise<Project[]> => {
-  console.log('Mengambil data proyek...');
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      console.log('Data proyek berhasil diambil.');
-      resolve([...mockProjects]);
-    }, 1500);
-  });
+  return simulateDelay([...mockProjects]);
 };
 
-/**
- * Mensimulasikan pengambilan satu proyek berdasarkan ID.
- * @param id ID Proyek
- * @returns Sebuah promise yang resolve dengan data proyek atau reject jika tidak ditemukan.
- */
-export const getProjectById = (id: string): Promise<Project> => {
-  console.log(`Mengambil proyek dengan ID: ${id}`);
-  return new Promise((resolve, reject) => {
-    setTimeout(() => {
-      const project = mockProjects.find(p => p.id === id);
-      if (project) {
-        console.log('Proyek ditemukan:', project);
-        resolve(project);
-      } else {
-        console.error('Proyek tidak ditemukan.');
-        reject(new Error('Proyek tidak ditemukan.'));
-      }
-    }, 500);
-  });
+export const getProjectById = (id: string): Promise<Project | undefined> => {
+  const project = mockProjects.find(p => p.id === id);
+  return simulateDelay(project);
 };
 
-
-/**
- * Mensimulasikan penyimpanan proyek baru ke API.
- * @param newProject Data proyek baru yang akan disimpan.
- * @returns Sebuah promise yang akan resolve dengan proyek yang telah dibuat setelah 1 detik.
- */
-export const createProject = (newProject: NewProject): Promise<Project> => {
-  console.log('Menyimpan proyek baru...', newProject);
-  return new Promise((resolve, reject) => {
-    setTimeout(() => {
-      if (!newProject.name || !newProject.key) {
-        return reject(new Error('Nama dan Key proyek wajib diisi.'));
-      }
-      const createdProject: Project = {
-        id: `proj-${new Date().getTime()}`,
-        client: newProject.client || 'N/A',
-        ...newProject,
-      };
-      mockProjects.push(createdProject);
-      console.log('Proyek baru berhasil disimpan.', createdProject);
-      resolve(createdProject);
-    }, 1000);
-  });
+export const createProject = (projectData: NewProject): Promise<Project> => {
+  const newProject: Project = {
+    ...projectData,
+    id: `proj-${new Date().getTime()}`,
+    memberCount: (projectData.users?.length || 0) + (projectData.groups?.length || 0), // Simplistic member count
+  };
+  mockProjects.push(newProject);
+  return simulateDelay(newProject);
 };
 
-/**
- * Mensimulasikan pembaruan proyek yang ada.
- * @param id ID Proyek yang akan diperbarui
- * @param updatedData Data yang akan diperbarui
- * @returns Promise yang resolve dengan proyek yang telah diperbarui.
- */
-export const updateProject = (id: string, updatedData: NewProject): Promise<Project> => {
-  console.log(`Memperbarui proyek ${id} dengan data:`, updatedData);
-  return new Promise((resolve, reject) => {
-    setTimeout(() => {
-      const projectIndex = mockProjects.findIndex(p => p.id === id);
-      if (projectIndex !== -1) {
-        mockProjects[projectIndex] = { ...mockProjects[projectIndex], ...updatedData };
-        console.log('Proyek berhasil diperbarui:', mockProjects[projectIndex]);
-        resolve(mockProjects[projectIndex]);
-      } else {
-        reject(new Error('Gagal memperbarui: Proyek tidak ditemukan.'));
-      }
-    }, 1000);
+export const updateProject = (id: string, updates: Partial<NewProject>): Promise<Project | undefined> => {
+  let updatedProject: Project | undefined;
+  mockProjects = mockProjects.map(p => {
+    if (p.id === id) {
+      updatedProject = { ...p, ...updates };
+      return updatedProject;
+    }
+    return p;
   });
+  return simulateDelay(updatedProject);
 };
 
-/**
- * Mensimulasikan penghapusan proyek.
- * @param id ID Proyek yang akan dihapus
- * @returns Promise yang resolve saat proyek berhasil dihapus.
- */
 export const deleteProject = (id: string): Promise<void> => {
-  console.log(`Menghapus proyek dengan ID: ${id}`);
-  return new Promise((resolve, reject) => {
-    setTimeout(() => {
-      const initialLength = mockProjects.length;
-      mockProjects = mockProjects.filter(p => p.id !== id);
-      if (mockProjects.length < initialLength) {
-        console.log('Proyek berhasil dihapus.');
-        resolve();
-      } else {
-        reject(new Error('Gagal menghapus: Proyek tidak ditemukan.'));
-      }
-    }, 1000);
-  });
+  mockProjects = mockProjects.filter(p => p.id !== id);
+  return simulateDelay(undefined);
 };

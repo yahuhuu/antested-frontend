@@ -1,6 +1,7 @@
 // Path: services/testCaseService.ts
 export type Priority = 'Critical' | 'High' | 'Medium' | 'Low';
-export type Status = 'Draft' | 'In Review' | 'Approved' | 'Need Update' | 'Archived';
+// Updated Status type to include all possible statuses from both workflows
+export type Status = 'Draft' | 'In Review' | 'Approved' | 'Need Update' | 'Archived' | 'Ready';
 
 export interface TestCase {
   id: string;
@@ -62,6 +63,18 @@ let mockTestCases: TestCase[] = [
         lastUpdated: `10/${10 + (i % 15)}/2025`,
         projectId: 'proj-002',
         directory: 'transfers',
+    })),
+    // Mock data for project with approvals disabled (proj-003)
+    ...Array.from({ length: 10 }, (_, i) => ({
+        id: `tc-crm-${i + 1}`,
+        caseId: `TC-CRM-${i + 1}`,
+        name: `CRM Feature Test #${i + 1}`,
+        priority: (['High', 'Medium', 'Low'] as Priority[])[i % 3],
+        status: (['Draft', 'Ready', 'Archived'] as Status[])[i % 3],
+        assignee: 'Charlie Brown',
+        lastUpdated: `09/${1 + (i % 28)}/2025`,
+        projectId: 'proj-003',
+        directory: 'contacts',
     }))
 ];
 
