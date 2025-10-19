@@ -185,7 +185,7 @@ const ProjectTestCasesPage: React.FC = () => {
 
     return (
         <>
-            <div className="flex h-full gap-6">
+            <div className="flex h-full gap-3">
                 {/* Directory Sidebar */}
                 <TestCaseDirectory 
                     activeDirectory={activeDirectory} 

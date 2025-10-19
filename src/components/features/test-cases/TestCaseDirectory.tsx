@@ -41,7 +41,7 @@ const DirectoryNodeItem: React.FC<{
             <div 
                 onMouseEnter={() => setIsHovered(true)}
                 onMouseLeave={() => setIsHovered(false)}
-                className={`group flex items-center justify-between pl-${depth * 2} pr-2 text-sm rounded-md transition-colors ${
+                className={`group flex items-center justify-between pl-${depth * 2} pr-2 text-xs rounded-md transition-colors ${
                     isActive 
                         ? 'bg-blue-500/10 text-blue-600 dark:text-blue-500' 
                         : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
