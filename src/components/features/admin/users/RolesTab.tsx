@@ -1,7 +1,8 @@
 // Path: src/components/features/admin/users/RolesTab.tsx
-import React, { useState, useEffect, useMemo } from 'react';
-import { getRoles, Role } from '../../../../services/roleService';
-import { SearchIcon, PlusIcon, EllipsisIcon } from '../../../ui/Icons';
+import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
+import ReactDOM from 'react-dom';
+import { getRoles, Role, deleteRole } from '../../../../services/roleService';
+import { SearchIcon, PlusIcon, EllipsisIcon, EditIcon, TrashIcon } from '../../../ui/Icons';
 import { Pagination } from '../../../ui/Pagination';
 import RoleFormModal from './RoleFormModal';
 import DeleteConfirmationModal from './DeleteConfirmationModal';
@@ -11,6 +12,8 @@ const RolesTab: React.FC = () => {
     const [roles, setRoles] = useState<Role[]>([]);
     const [loading, setLoading] = useState(true);
     const [search, setSearch] = useState('');
+    const [openMenu, setOpenMenu] = useState<string | null>(null);
+    const [menuPosition, setMenuPosition] = useState<{ top: number; left: number } | null>(null);
 
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -19,19 +22,59 @@ const RolesTab: React.FC = () => {
     const [currentPage, setCurrentPage] = useState(1);
     const [rowsPerPage, setRowsPerPage] = useState(10);
 
-    useEffect(() => {
-        const fetchRoles = async () => {
-            setLoading(true);
+    const fetchRoles = useCallback(async () => {
+        setLoading(true);
+        try {
             const data = await getRoles();
             setRoles(data);
+        } catch (error) {
+            console.error("Failed to fetch roles", error);
+        } finally {
             setLoading(false);
-        };
-        fetchRoles();
+        }
     }, []);
+
+    useEffect(() => {
+        fetchRoles();
+    }, [fetchRoles]);
+
+    // Effect to close menu on outside click or scroll
+    useEffect(() => {
+        const handleClose = () => {
+            setOpenMenu(null);
+            setMenuPosition(null);
+        };
+
+        if (openMenu) {
+            document.addEventListener('mousedown', handleClose);
+            window.addEventListener('scroll', handleClose, true);
+        }
+
+        return () => {
+            document.removeEventListener('mousedown', handleClose);
+            window.removeEventListener('scroll', handleClose, true);
+        };
+    }, [openMenu]);
+
 
     useEffect(() => {
         setCurrentPage(1);
     }, [search, rowsPerPage]);
+    
+    const handleMenuToggle = (e: React.MouseEvent<HTMLButtonElement>, roleId: string) => {
+        e.stopPropagation(); // Prevent the document's mousedown listener from firing immediately
+        if (openMenu === roleId) {
+            setOpenMenu(null);
+            setMenuPosition(null);
+        } else {
+            const rect = e.currentTarget.getBoundingClientRect();
+            setMenuPosition({
+                top: rect.top + window.scrollY,      // Position relative to top of button
+                left: rect.right + window.scrollX,   // Position relative to right of button
+            });
+            setOpenMenu(roleId);
+        }
+    };
 
     const handleAddRole = () => {
         setSelectedRole(null);
@@ -41,19 +84,30 @@ const RolesTab: React.FC = () => {
     const handleEditRole = (role: Role) => {
         setSelectedRole(role);
         setIsModalOpen(true);
+        setOpenMenu(null);
     };
 
     const handleDeleteRole = (role: Role) => {
         setSelectedRole(role);
         setIsDeleteModalOpen(true);
+        setOpenMenu(null);
+    };
+
+    const handleConfirmDelete = async () => {
+        if (!selectedRole) return;
+        try {
+            await deleteRole(selectedRole.id);
+            setIsDeleteModalOpen(false);
+            setSelectedRole(null);
+            await fetchRoles();
+        } catch (error) {
+            console.error("Failed to delete role", error);
+        }
     };
 
     const handleSaveRole = async () => {
         setIsModalOpen(false);
-        setLoading(true);
-        const data = await getRoles();
-        setRoles(data);
-        setLoading(false);
+        await fetchRoles();
     }
 
     const filteredRoles = useMemo(() => roles.filter(role =>
@@ -67,6 +121,8 @@ const RolesTab: React.FC = () => {
         const end = start + rowsPerPage;
         return filteredRoles.slice(start, end);
     }, [filteredRoles, currentPage, rowsPerPage]);
+    
+    const roleForMenu = openMenu ? roles.find(r => r.id === openMenu) : null;
 
     return (
         <>
@@ -110,7 +166,9 @@ const RolesTab: React.FC = () => {
                                         <td className="px-6 py-4 text-sm text-gray-500 dark:text-gray-300 truncate max-w-sm">{role.description}</td>
                                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">{role.users}</td>
                                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                            <button onClick={() => handleEditRole(role)} className="text-gray-500 hover:text-gray-800 dark:hover:text-gray-200 p-1 rounded-full"><EllipsisIcon /></button>
+                                            <button onClick={(e) => handleMenuToggle(e, role.id)} className="text-gray-500 hover:text-gray-800 dark:hover:text-gray-200 p-1 rounded-full">
+                                                <EllipsisIcon />
+                                            </button>
                                         </td>
                                     </tr>
                                 ))
@@ -127,6 +185,26 @@ const RolesTab: React.FC = () => {
                     onRowsPerPageChange={setRowsPerPage}
                 />
             </div>
+            
+            {openMenu && menuPosition && roleForMenu && ReactDOM.createPortal(
+                <div
+                    onClick={(e) => e.stopPropagation()} // Prevents clicks inside the menu from closing it
+                    style={{
+                        position: 'absolute',
+                        top: `${menuPosition.top}px`,
+                        left: `${menuPosition.left}px`,
+                        // Positions the menu's bottom-right corner at the button's top-right corner
+                        transform: 'translate(-100%, -100%)', 
+                    }}
+                    className="z-50 w-36 bg-white dark:bg-gray-800 rounded-md shadow-lg border dark:border-gray-700"
+                >
+                    <ul className="py-1 text-sm text-gray-700 dark:text-gray-200">
+                        <li onClick={() => handleEditRole(roleForMenu)} className="flex items-center gap-3 px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer"><EditIcon className="w-4 h-4" /> Edit</li>
+                        <li onClick={() => handleDeleteRole(roleForMenu)} className="flex items-center gap-3 px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 text-red-600 dark:text-red-400 cursor-pointer"><TrashIcon className="w-4 h-4" /> Delete</li>
+                    </ul>
+                </div>,
+                document.body
+            )}
 
             <RoleFormModal
                 isOpen={isModalOpen}
@@ -138,7 +216,7 @@ const RolesTab: React.FC = () => {
                 <DeleteConfirmationModal
                     isOpen={isDeleteModalOpen}
                     onClose={() => setIsDeleteModalOpen(false)}
-                    onConfirm={() => setIsDeleteModalOpen(false)}
+                    onConfirm={handleConfirmDelete}
                     itemName={selectedRole.name}
                     itemType="role"
                 />

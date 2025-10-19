@@ -1,10 +1,11 @@
 // Path: src/pages/admin/AdminProjectsPage.tsx
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import ReactDOM from 'react-dom';
 import { Project, getProjects, createProject, updateProject, deleteProject, NewProject } from '../../services/projectService';
 import ProjectFormModal from '../../components/features/admin/projects/ProjectFormModal';
 import DeleteProjectModal from '../../components/features/admin/projects/DeleteProjectModal';
 import { Pagination } from '../../components/ui/Pagination';
-import { PlusIcon, EditIcon, TrashIcon } from '../../components/ui/Icons';
+import { PlusIcon, EditIcon, TrashIcon, EllipsisIcon } from '../../components/ui/Icons';
 
 const AdminProjectsPage: React.FC = () => {
     const [projects, setProjects] = useState<Project[]>([]);
@@ -18,6 +19,9 @@ const AdminProjectsPage: React.FC = () => {
 
     const [currentPage, setCurrentPage] = useState(1);
     const [rowsPerPage, setRowsPerPage] = useState(10);
+
+    const [openMenu, setOpenMenu] = useState<string | null>(null);
+    const [menuPosition, setMenuPosition] = useState<{ top: number; left: number } | null>(null);
 
     const fetchProjects = useCallback(async () => {
         try {
@@ -36,10 +40,42 @@ const AdminProjectsPage: React.FC = () => {
     useEffect(() => {
         fetchProjects();
     }, [fetchProjects]);
+    
+    useEffect(() => {
+        const handleClose = () => {
+            setOpenMenu(null);
+            setMenuPosition(null);
+        };
+
+        if (openMenu) {
+            document.addEventListener('mousedown', handleClose);
+            window.addEventListener('scroll', handleClose, true);
+        }
+
+        return () => {
+            document.removeEventListener('mousedown', handleClose);
+            window.removeEventListener('scroll', handleClose, true);
+        };
+    }, [openMenu]);
 
     useEffect(() => {
         setCurrentPage(1);
     }, [rowsPerPage]);
+
+    const handleMenuToggle = (e: React.MouseEvent<HTMLButtonElement>, projectId: string) => {
+        e.stopPropagation();
+        if (openMenu === projectId) {
+            setOpenMenu(null);
+            setMenuPosition(null);
+        } else {
+            const rect = e.currentTarget.getBoundingClientRect();
+            setMenuPosition({
+                top: rect.top + window.scrollY,
+                left: rect.right + window.scrollX,
+            });
+            setOpenMenu(projectId);
+        }
+    };
 
     const handleOpenCreateModal = () => {
         setSelectedProject(null);
@@ -49,11 +85,13 @@ const AdminProjectsPage: React.FC = () => {
     const handleOpenEditModal = (project: Project) => {
         setSelectedProject(project);
         setIsFormModalOpen(true);
+        setOpenMenu(null);
     };
 
     const handleOpenDeleteModal = (project: Project) => {
         setSelectedProject(project);
         setIsDeleteModalOpen(true);
+        setOpenMenu(null);
     };
 
     const handleSaveProject = async (projectData: NewProject | Project) => {
@@ -88,6 +126,8 @@ const AdminProjectsPage: React.FC = () => {
         const end = start + rowsPerPage;
         return projects.slice(start, end);
     }, [projects, currentPage, rowsPerPage]);
+    
+    const projectForMenu = openMenu ? projects.find(p => p.id === openMenu) : null;
 
     return (
         <>
@@ -126,12 +166,9 @@ const AdminProjectsPage: React.FC = () => {
                                     <td className="px-6 py-4 whitespace-nowrap text-sm font-mono text-gray-500 dark:text-gray-300">{project.key}</td>
                                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300 truncate" style={{ maxWidth: '300px' }} title={project.description}>{project.description}</td>
                                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">{project.memberCount}</td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-4">
-                                        <button onClick={() => handleOpenEditModal(project)} className="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-200">
-                                            <EditIcon className="w-5 h-5" />
-                                        </button>
-                                        <button onClick={() => handleOpenDeleteModal(project)} className="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-200">
-                                            <TrashIcon className="w-5 h-5" />
+                                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                         <button onClick={(e) => handleMenuToggle(e, project.id)} className="text-gray-500 hover:text-gray-800 dark:hover:text-gray-200 p-1 rounded-full">
+                                            <EllipsisIcon />
                                         </button>
                                     </td>
                                 </tr>
@@ -165,6 +202,25 @@ const AdminProjectsPage: React.FC = () => {
                     onConfirm={handleDeleteConfirm}
                     projectName={selectedProject.name}
                 />
+            )}
+
+            {openMenu && menuPosition && projectForMenu && ReactDOM.createPortal(
+                <div
+                    onClick={e => e.stopPropagation()}
+                    style={{
+                        position: 'absolute',
+                        top: `${menuPosition.top}px`,
+                        left: `${menuPosition.left}px`,
+                        transform: 'translate(-100%, -100%)',
+                    }}
+                    className="z-50 w-36 bg-white dark:bg-gray-800 rounded-md shadow-lg border dark:border-gray-700"
+                >
+                    <ul className="py-1 text-sm text-gray-700 dark:text-gray-200">
+                        <li onClick={() => handleOpenEditModal(projectForMenu)} className="flex items-center gap-3 px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer"><EditIcon className="w-4 h-4" /> Edit</li>
+                        <li onClick={() => handleOpenDeleteModal(projectForMenu)} className="flex items-center gap-3 px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 text-red-600 dark:text-red-400 cursor-pointer"><TrashIcon className="w-4 h-4" /> Delete</li>
+                    </ul>
+                </div>,
+                document.body
             )}
         </>
     );

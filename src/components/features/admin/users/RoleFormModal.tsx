@@ -49,10 +49,13 @@ const RoleFormModal: React.FC<RoleFormModalProps> = ({ isOpen, onClose, onSave, 
   if (!isOpen) return null;
 
   const inputStyle = "mt-1 block w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500";
+  
+  const crudGroups = permissionGroups.filter(g => g.id !== 'pg-admin');
+  const adminGroup = permissionGroups.find(g => g.id === 'pg-admin');
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-60 z-50 flex justify-center items-center" onClick={onClose}>
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-2xl m-4 flex flex-col max-h-[90vh]" onClick={e => e.stopPropagation()}>
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-4xl m-4 flex flex-col max-h-[90vh]" onClick={e => e.stopPropagation()}>
         <div className="flex justify-between items-center p-5 border-b dark:border-gray-700">
           <h2 className="text-xl font-bold text-gray-800 dark:text-white">{role ? 'Edit Role' : 'Add Role'}</h2>
           <button onClick={onClose} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"><XIcon /></button>
@@ -68,13 +71,37 @@ const RoleFormModal: React.FC<RoleFormModalProps> = ({ isOpen, onClose, onSave, 
             <textarea id="roleDescription" value={description} onChange={e => setDescription(e.target.value)} className={`${inputStyle} h-24 resize-none`} />
           </div>
           <div>
-            <h3 className="text-md font-medium text-gray-800 dark:text-gray-200">Permissions</h3>
-            <div className="mt-2 space-y-4">
-              {permissionGroups.map(group => (
-                <div key={group.id} className="p-3 border dark:border-gray-600 rounded-md">
-                  <h4 className="font-semibold text-gray-700 dark:text-gray-300">{group.name}</h4>
-                  <div className="mt-2 grid grid-cols-1 sm:grid-cols-2 gap-2">
-                    {group.permissions.map(perm => (
+            <h3 className="text-md font-medium text-gray-800 dark:text-gray-200 mb-3">Permissions</h3>
+            
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              {crudGroups.map(group => {
+                const createPerm = group.permissions.find(p => p.label === 'Create');
+                const editPerm = group.permissions.find(p => p.label === 'Edit');
+                const viewPerm = group.permissions.find(p => p.label === 'View');
+                const deletePerm = group.permissions.find(p => p.label === 'Delete');
+
+                return (
+                  <div key={group.id}>
+                    <h4 className="font-semibold text-gray-700 dark:text-gray-300 mb-2">{group.name}</h4>
+                    <div className="p-4 border dark:border-gray-600 rounded-md">
+                      <div className="grid grid-cols-2 gap-x-6 gap-y-3">
+                        {createPerm && <Checkbox id={`perm-${createPerm.id}`} label={createPerm.label} checked={selectedPermissions.has(createPerm.id)} onChange={() => handlePermissionToggle(createPerm.id)} />}
+                        {editPerm && <Checkbox id={`perm-${editPerm.id}`} label={editPerm.label} checked={selectedPermissions.has(editPerm.id)} onChange={() => handlePermissionToggle(editPerm.id)} />}
+                        {viewPerm && <Checkbox id={`perm-${viewPerm.id}`} label={viewPerm.label} checked={selectedPermissions.has(viewPerm.id)} onChange={() => handlePermissionToggle(viewPerm.id)} />}
+                        {deletePerm && <Checkbox id={`perm-${deletePerm.id}`} label={deletePerm.label} checked={selectedPermissions.has(deletePerm.id)} onChange={() => handlePermissionToggle(deletePerm.id)} />}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {adminGroup && (
+              <div className="mt-6">
+                <h4 className="font-semibold text-gray-700 dark:text-gray-300 mb-2">{adminGroup.name}</h4>
+                <div className="p-4 border dark:border-gray-600 rounded-md">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-3">
+                    {adminGroup.permissions.map(perm => (
                       <Checkbox
                         key={perm.id}
                         id={`perm-${perm.id}`}
@@ -85,8 +112,8 @@ const RoleFormModal: React.FC<RoleFormModalProps> = ({ isOpen, onClose, onSave, 
                     ))}
                   </div>
                 </div>
-              ))}
-            </div>
+              </div>
+            )}
           </div>
         </form>
 
