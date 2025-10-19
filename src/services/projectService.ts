@@ -22,9 +22,10 @@ let mockProjects: Project[] = [
     key: 'CWR',
     description: 'A complete overhaul of the main client-facing website, including new branding and a modern tech stack.',
     enableApprovals: true,
-    // FIX: Updated user object to match the User interface from userService, which includes an email and avatarUrl.
-    users: [{ id: 'user-1', name: 'Admin User', email: 'admin@example.com', avatarUrl: `https://i.pravatar.cc/40?u=user-1` }],
-    groups: [{ id: 'group-1', name: 'Developers' }],
+    // FIX: The user object was missing properties required by the 'User' interface. It has been updated to include 'role', 'status', 'lastActive', and 'groups'.
+    users: [{ id: 'user-1', name: 'Admin User', email: 'admin@example.com', avatarUrl: `https://i.pravatar.cc/40?u=user-1`, role: 'Lead', status: 'Active', lastActive: '2 hours ago', groups: ['group-1', 'group-3'] }],
+    // FIX: The group object was missing properties required by the 'Group' interface. It has been updated to include 'description' and 'users'.
+    groups: [{ id: 'group-1', name: 'Developers', description: 'Responsible for application development.', users: ['user-1', 'user-3'] }],
     memberCount: 5,
   },
   {
