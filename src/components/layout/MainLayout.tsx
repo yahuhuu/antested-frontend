@@ -83,7 +83,7 @@ const MainLayout: React.FC = () => {
             </header>
             <div className="flex flex-1 overflow-hidden">
                 {isProjectPage && <ProjectSidebar />}
-                <main className="flex-1 overflow-y-auto bg-gray-50 dark:bg-gray-900 p-6 md:p-8">
+                <main className="flex-1 overflow-y-auto bg-gray-50 dark:bg-gray-900 p-4">
                     <Outlet />
                 </main>
             </div>
