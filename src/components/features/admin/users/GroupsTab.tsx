@@ -1,7 +1,8 @@
 // Path: src/components/features/admin/users/GroupsTab.tsx
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { getGroups, Group } from '../../../../services/userService';
 import { SearchIcon, PlusIcon, EllipsisIcon, EditIcon, TrashIcon } from '../../../ui/Icons';
+import { Pagination } from '../../../ui/Pagination';
 import GroupFormModal from './GroupFormModal';
 import DeleteConfirmationModal from './DeleteConfirmationModal';
 
@@ -15,6 +16,9 @@ const GroupsTab: React.FC = () => {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
     const [selectedGroup, setSelectedGroup] = useState<Group | null>(null);
+
+    const [currentPage, setCurrentPage] = useState(1);
+    const [rowsPerPage, setRowsPerPage] = useState(10);
 
     useEffect(() => {
         const fetchGroups = async () => {
@@ -35,6 +39,10 @@ const GroupsTab: React.FC = () => {
         document.addEventListener('mousedown', handleClickOutside);
         return () => document.removeEventListener('mousedown', handleClickOutside);
       }, []);
+
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [search, rowsPerPage]);
 
     const handleAddGroup = () => {
         setSelectedGroup(null);
@@ -61,9 +69,17 @@ const GroupsTab: React.FC = () => {
         setLoading(false);
     };
 
-    const filteredGroups = groups.filter(group =>
+    const filteredGroups = useMemo(() => groups.filter(group =>
         group.name.toLowerCase().includes(search.toLowerCase())
-    );
+    ), [groups, search]);
+
+    const totalGroups = filteredGroups.length;
+    const totalPages = useMemo(() => Math.ceil(totalGroups / rowsPerPage), [totalGroups, rowsPerPage]);
+    const paginatedGroups = useMemo(() => {
+        const start = (currentPage - 1) * rowsPerPage;
+        const end = start + rowsPerPage;
+        return filteredGroups.slice(start, end);
+    }, [filteredGroups, currentPage, rowsPerPage]);
 
     return (
         <>
@@ -85,42 +101,52 @@ const GroupsTab: React.FC = () => {
                     <PlusIcon /> Add Group
                 </button>
             </div>
-            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden">
-                <table className="min-w-full">
-                    <thead className="bg-gray-50 dark:bg-gray-700">
-                        <tr>
-                            {['Name', 'Description', 'Users', 'Actions'].map(header => (
-                                <th key={header} className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                                    {header}
-                                </th>
-                            ))}
-                        </tr>
-                    </thead>
-                    <tbody className="divide-y divide-gray-200 dark:divide-gray-600">
-                         {loading ? (
-                            <tr><td colSpan={4} className="text-center p-6 text-gray-500">Loading...</td></tr>
-                        ) : (
-                            filteredGroups.map(group => (
-                                <tr key={group.id}>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">{group.name}</td>
-                                    <td className="px-6 py-4 text-sm text-gray-500 dark:text-gray-300 truncate max-w-sm">{group.description}</td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">{group.users.length}</td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium relative">
-                                        <button onClick={() => setOpenMenu(openMenu === group.id ? null : group.id)} className="text-gray-500 hover:text-gray-800 dark:hover:text-gray-200 p-1 rounded-full"><EllipsisIcon /></button>
-                                        {openMenu === group.id && (
-                                            <div ref={menuRef} className="absolute right-8 top-full z-10 mt-2 w-36 bg-white dark:bg-gray-800 rounded-md shadow-lg border dark:border-gray-700">
-                                                <ul className="py-1 text-sm text-gray-700 dark:text-gray-200">
-                                                    <li onClick={() => handleEditGroup(group)} className="flex items-center gap-3 px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer"><EditIcon className="w-4 h-4" /> Edit</li>
-                                                    <li onClick={() => handleDeleteGroup(group)} className="flex items-center gap-3 px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 text-red-600 dark:text-red-400 cursor-pointer"><TrashIcon className="w-4 h-4" /> Delete</li>
-                                                </ul>
-                                            </div>
-                                        )}
-                                    </td>
-                                </tr>
-                            ))
-                        )}
-                    </tbody>
-                </table>
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden flex flex-col">
+                <div className="overflow-x-auto">
+                    <table className="min-w-full">
+                        <thead className="bg-gray-50 dark:bg-gray-700">
+                            <tr>
+                                {['Name', 'Description', 'Users', 'Actions'].map(header => (
+                                    <th key={header} className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                                        {header}
+                                    </th>
+                                ))}
+                            </tr>
+                        </thead>
+                        <tbody className="divide-y divide-gray-200 dark:divide-gray-600">
+                            {loading ? (
+                                <tr><td colSpan={4} className="text-center p-6 text-gray-500">Loading...</td></tr>
+                            ) : (
+                                paginatedGroups.map(group => (
+                                    <tr key={group.id}>
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">{group.name}</td>
+                                        <td className="px-6 py-4 text-sm text-gray-500 dark:text-gray-300 truncate max-w-sm">{group.description}</td>
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">{group.users.length}</td>
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium relative">
+                                            <button onClick={() => setOpenMenu(openMenu === group.id ? null : group.id)} className="text-gray-500 hover:text-gray-800 dark:hover:text-gray-200 p-1 rounded-full"><EllipsisIcon /></button>
+                                            {openMenu === group.id && (
+                                                <div ref={menuRef} className="absolute right-8 top-full z-10 mt-2 w-36 bg-white dark:bg-gray-800 rounded-md shadow-lg border dark:border-gray-700">
+                                                    <ul className="py-1 text-sm text-gray-700 dark:text-gray-200">
+                                                        <li onClick={() => handleEditGroup(group)} className="flex items-center gap-3 px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer"><EditIcon className="w-4 h-4" /> Edit</li>
+                                                        <li onClick={() => handleDeleteGroup(group)} className="flex items-center gap-3 px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 text-red-600 dark:text-red-400 cursor-pointer"><TrashIcon className="w-4 h-4" /> Delete</li>
+                                                    </ul>
+                                                </div>
+                                            )}
+                                        </td>
+                                    </tr>
+                                ))
+                            )}
+                        </tbody>
+                    </table>
+                </div>
+                 <Pagination
+                    currentPage={currentPage}
+                    totalPages={totalPages}
+                    rowsPerPage={rowsPerPage}
+                    totalItems={totalGroups}
+                    onPageChange={setCurrentPage}
+                    onRowsPerPageChange={setRowsPerPage}
+                />
             </div>
 
             <GroupFormModal

@@ -1,7 +1,7 @@
 // Path: src/components/features/admin/users/GroupFormModal.tsx
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, ChangeEvent } from 'react';
 import { Group, User, getUsers } from '../../../../services/userService';
-import { XIcon } from '../../../ui/Icons';
+import { XIcon, ChevronDownIcon, TrashIcon } from '../../../ui/Icons';
 
 interface GroupFormModalProps {
   isOpen: boolean;
@@ -36,21 +36,27 @@ const GroupFormModal: React.FC<GroupFormModalProps> = ({ isOpen, onClose, onSave
     await onSave();
   };
   
-  const handleUserToggle = (userId: string) => {
+  const handleAddUser = (e: ChangeEvent<HTMLSelectElement>) => {
+    const userId = e.target.value;
+    if (userId) {
+        setSelectedUserIds(prev => new Set(prev).add(userId));
+        e.target.value = ''; // Reset select
+    }
+  };
+
+  const handleRemoveUser = (userId: string) => {
       setSelectedUserIds(prev => {
           const newSet = new Set(prev);
-          if (newSet.has(userId)) {
-              newSet.delete(userId);
-          } else {
-              newSet.add(userId);
-          }
+          newSet.delete(userId);
           return newSet;
-      })
-  }
+      });
+  };
 
   if (!isOpen) return null;
 
   const inputStyle = "mt-1 block w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500";
+  const availableUsers = allUsers.filter(u => !selectedUserIds.has(u.id));
+  const selectedUsers = Array.from(selectedUserIds).map(id => allUsers.find(u => u.id === id)).filter(Boolean) as User[];
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-60 z-50 flex justify-center items-center" onClick={onClose}>
@@ -60,7 +66,7 @@ const GroupFormModal: React.FC<GroupFormModalProps> = ({ isOpen, onClose, onSave
           <button onClick={onClose} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"><XIcon /></button>
         </div>
 
-        <form id="group-form" onSubmit={handleSubmit} className="p-5 overflow-y-auto space-y-4">
+        <form id="group-form" onSubmit={handleSubmit} className="p-5 space-y-4 flex flex-col flex-grow">
           <div>
             <label htmlFor="groupName" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Name</label>
             <input type="text" id="groupName" value={name} onChange={e => setName(e.target.value)} className={inputStyle} required />
@@ -69,15 +75,33 @@ const GroupFormModal: React.FC<GroupFormModalProps> = ({ isOpen, onClose, onSave
             <label htmlFor="groupDescription" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Description</label>
             <textarea id="groupDescription" value={description} onChange={e => setDescription(e.target.value)} className={`${inputStyle} h-24 resize-none`} />
           </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Users</label>
-            <div className="mt-1 p-2 border border-gray-300 dark:border-gray-600 rounded-md h-48 overflow-y-auto space-y-1">
-                {allUsers.map(user => (
-                    <label key={user.id} className="flex items-center space-x-3 p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700">
-                        <input type="checkbox" checked={selectedUserIds.has(user.id)} onChange={() => handleUserToggle(user.id)} className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500" />
-                        <span className="text-sm text-gray-800 dark:text-gray-200">{user.name}</span>
-                    </label>
-                ))}
+          <div className="flex flex-col flex-grow min-h-0">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Users</label>
+            <div className="border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 flex flex-col flex-grow min-h-0">
+                <div className="flex-grow overflow-y-auto p-2 space-y-2">
+                    {selectedUsers.length > 0 ? selectedUsers.map(user => (
+                        <div key={user.id} className="flex items-center justify-between bg-gray-100 dark:bg-gray-800/50 p-2 rounded-md">
+                            <div className="flex items-center gap-3">
+                                <img src={user.avatarUrl} alt={user.name} className="w-8 h-8 rounded-full" />
+                                <div>
+                                    <p className="font-semibold text-sm text-gray-800 dark:text-gray-200">{user.name}</p>
+                                    <p className="text-xs text-gray-500 dark:text-gray-400">{user.email}</p>
+                                </div>
+                            </div>
+                            <button type="button" onClick={() => handleRemoveUser(user.id)} className="text-gray-400 hover:text-red-500 p-1"><TrashIcon className="w-4 h-4" /></button>
+                        </div>
+                    )) : (
+                        <div className="flex items-center justify-center h-full text-xs text-gray-500 dark:text-gray-400">No users have been added.</div>
+                    )}
+                </div>
+                <div className="relative border-t border-gray-300 dark:border-gray-600 flex-shrink-0">
+                    <select onChange={handleAddUser} value="" className="w-full appearance-none pl-9 pr-4 py-2 bg-white dark:bg-gray-700 rounded-b-md focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-500">
+                        <option value="" disabled>Add user...</option>
+                        {availableUsers.map(user => <option key={user.id} value={user.id}>{user.name}</option>)}
+                    </select>
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-lg font-semibold pointer-events-none">+</span>
+                    <ChevronDownIcon className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+                </div>
             </div>
           </div>
         </form>

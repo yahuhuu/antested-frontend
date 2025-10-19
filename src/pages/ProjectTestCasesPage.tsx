@@ -5,7 +5,7 @@ import { getTestCases, TestCase, deleteTestCases } from '../services/testCaseSer
 import { getProjectById, Project } from '../services/projectService';
 import { TestCaseDirectory, DirectoryNode } from '../components/features/test-cases/TestCaseDirectory';
 import { TestCaseTable } from '../components/features/test-cases/TestCaseTable';
-import { Pagination } from '../components/features/test-cases/Pagination';
+import { Pagination } from '../components/ui/Pagination';
 import DeleteTestCaseModal from '../components/features/test-cases/DeleteTestCaseModal';
 import AddDirectoryModal from '../components/features/test-cases/AddDirectoryModal';
 import AIGenerateModal from '../components/features/test-cases/AIGenerateModal';

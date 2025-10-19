@@ -1,6 +1,6 @@
-// Path: src/components/features/test-cases/Pagination.tsx
+// Path: src/components/ui/Pagination.tsx
 import React, { useState, useEffect } from 'react';
-import { ChevronLeftIcon, ChevronRightIcon } from '../../ui/Icons';
+import { ChevronLeftIcon, ChevronRightIcon } from './Icons';
 
 interface PaginationProps {
   currentPage: number;
@@ -102,3 +102,5 @@ export const Pagination: React.FC<PaginationProps> = ({
     </div>
   );
 };
+
+export default Pagination;
