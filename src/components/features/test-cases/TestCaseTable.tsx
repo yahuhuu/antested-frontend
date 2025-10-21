@@ -37,6 +37,11 @@ interface TestCaseTableProps {
     onSelectAll: (checked: boolean) => void;
     areAllVisibleSelected: boolean;
     onDelete: (id: string) => void;
+    onEdit: (id: string) => void;
+    onViewDetails: (id: string) => void;
+    onDuplicate: (id: string) => void;
+    showAssignee?: boolean;
+    showActions?: boolean;
 }
 
 export const TestCaseTable: React.FC<TestCaseTableProps> = ({ 
@@ -47,11 +52,19 @@ export const TestCaseTable: React.FC<TestCaseTableProps> = ({
     onSelectItem,
     onSelectAll,
     areAllVisibleSelected,
-    onDelete
+    onDelete,
+    onEdit,
+    onViewDetails,
+    onDuplicate,
+    showAssignee = true,
+    showActions = true,
 }) => {
-    const tableHeaders = ["Case ID", "Name", "Directory", "Priority", "Status", "Assignee", "Actions"];
     const [openMenu, setOpenMenu] = useState<string | null>(null);
     const [menuPosition, setMenuPosition] = useState<{ top: number; left: number } | null>(null);
+    
+    const tableHeaders = ["Case ID", "Name", "Directory", "Priority", "Status"];
+    if (showAssignee) tableHeaders.push("Assignee");
+    if (showActions) tableHeaders.push("Actions");
 
     useEffect(() => {
         const handleClose = () => {
@@ -93,31 +106,47 @@ export const TestCaseTable: React.FC<TestCaseTableProps> = ({
         setOpenMenu(null);
     };
 
+    const handleEditClick = (id: string) => {
+        onEdit(id);
+        setOpenMenu(null);
+    };
+
+    const handleDuplicateClick = (id: string) => {
+        onDuplicate(id);
+        setOpenMenu(null);
+    };
+    
+    const colSpan = 1 + tableHeaders.length;
+
     const renderContent = () => {
         if (loading) return (
-            <tr><td colSpan={8} className="text-center py-10 text-gray-500 dark:text-gray-400">Loading test cases...</td></tr>
+            <tr><td colSpan={colSpan} className="text-center py-10 text-gray-500 dark:text-gray-400">Loading test cases...</td></tr>
         );
         if (error) return (
-            <tr><td colSpan={8} className="text-center py-10 text-red-500">{error}</td></tr>
+            <tr><td colSpan={colSpan} className="text-center py-10 text-red-500">{error}</td></tr>
         );
         if (testCases.length === 0) {
-            return <tr><td colSpan={8} className="text-center py-10 text-gray-500 dark:text-gray-400">No test cases found.</td></tr>;
+            return <tr><td colSpan={colSpan} className="text-center py-10 text-gray-500 dark:text-gray-400">No test cases found.</td></tr>;
         }
 
         return testCases.map((tc) => (
-            <tr key={tc.id} className="border-b border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50">
-                <td className="px-4 py-3"><Checkbox id={`cb-${tc.id}`} checked={selectedCases.has(tc.id)} onChange={e => onSelectItem(tc.id, e.target.checked)} /></td>
+            <tr key={tc.id} onClick={() => onViewDetails(tc.id)} className="border-b border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50 cursor-pointer">
+                <td className="px-4 py-3" onClick={e => e.stopPropagation()}><Checkbox id={`cb-${tc.id}`} checked={selectedCases.has(tc.id)} onChange={e => onSelectItem(tc.id, e.target.checked)} /></td>
                 <td className="px-4 py-3 whitespace-nowrap text-sm font-mono text-gray-500 dark:text-gray-400">{tc.caseId}</td>
                 <td className="px-4 py-3 text-sm font-semibold text-gray-800 dark:text-gray-100 truncate" style={{ maxWidth: '200px' }} title={tc.name}>{tc.name}</td>
                 <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-600 dark:text-gray-300">{tc.directory}</td>
                 <td className="px-4 py-3 whitespace-nowrap"><PriorityBadge priority={tc.priority} /></td>
                 <td className="px-4 py-3 whitespace-nowrap"><StatusBadge status={tc.status} /></td>
-                <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-600 dark:text-gray-300">{tc.assignee}</td>
-                <td className="px-4 py-3 text-center">
-                    <button onClick={(e) => handleMenuToggle(e, tc.id)} className="text-gray-500 hover:text-gray-800 dark:hover:text-gray-200 p-1 rounded-full hover:bg-gray-200 dark:hover:bg-gray-600">
-                        <EllipsisIcon />
-                    </button>
-                </td>
+                {showAssignee && <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-600 dark:text-gray-300">{tc.assignee}</td>}
+                {showActions && (
+                    <td className="px-4 py-3" onClick={e => e.stopPropagation()}>
+                        <div className="flex justify-center items-center">
+                            <button onClick={(e) => handleMenuToggle(e, tc.id)} className="text-gray-500 hover:text-gray-800 dark:hover:text-gray-200 p-1 rounded-full hover:bg-gray-200 dark:hover:bg-gray-600">
+                                <EllipsisIcon />
+                            </button>
+                        </div>
+                    </td>
+                )}
             </tr>
         ));
     };
@@ -131,7 +160,7 @@ export const TestCaseTable: React.FC<TestCaseTableProps> = ({
                     <tr>
                         <th className="px-4 py-4 w-12"><Checkbox id="cb-all" checked={areAllVisibleSelected} onChange={e => onSelectAll(e.target.checked)} /></th>
                         {tableHeaders.map(header => (
-                            <th key={header} scope="col" className="px-4 py-4 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                            <th key={header} scope="col" className={`px-4 py-4 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider ${header === 'Actions' ? 'text-center' : ''}`}>
                                 {header}
                             </th>
                         ))}
@@ -142,8 +171,9 @@ export const TestCaseTable: React.FC<TestCaseTableProps> = ({
                 </tbody>
             </table>
             
-            {openMenu && menuPosition && testCaseForMenu && ReactDOM.createPortal(
+            {openMenu && menuPosition && testCaseForMenu && showActions && ReactDOM.createPortal(
                  <div
+                    onMouseDown={e => e.stopPropagation()}
                     onClick={e => e.stopPropagation()}
                     style={{
                         position: 'absolute',
@@ -154,8 +184,8 @@ export const TestCaseTable: React.FC<TestCaseTableProps> = ({
                     className="z-50 w-36 bg-white dark:bg-gray-800 rounded-md shadow-lg border dark:border-gray-700"
                 >
                     <ul className="py-1 text-sm text-gray-700 dark:text-gray-200">
-                        <li className="flex items-center gap-3 px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer"><EditIcon className="w-4 h-4" /> Edit</li>
-                        <li className="flex items-center gap-3 px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer"><DuplicateIcon className="w-4 h-4" /> Duplicate</li>
+                        <li onClick={() => handleEditClick(testCaseForMenu.id)} className="flex items-center gap-3 px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer"><EditIcon className="w-4 h-4" /> Edit</li>
+                        <li onClick={() => handleDuplicateClick(testCaseForMenu.id)} className="flex items-center gap-3 px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer"><DuplicateIcon className="w-4 h-4" /> Duplicate</li>
                         <li onClick={() => handleDeleteClick(testCaseForMenu.id)} className="flex items-center gap-3 px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 text-red-600 dark:text-red-400 cursor-pointer"><TrashIcon className="w-4 h-4" /> Delete</li>
                     </ul>
                 </div>,

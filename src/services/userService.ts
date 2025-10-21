@@ -17,14 +17,14 @@ export interface Group {
     users: string[]; // User IDs
 }
 
-let mockUsers: User[] = [
+export let mockUsers: User[] = [
     { id: 'user-1', name: 'Admin User', email: 'admin@example.com', avatarUrl: `https://i.pravatar.cc/40?u=user-1`, role: 'Lead', status: 'Active', lastActive: '2 hours ago', groups: ['group-1', 'group-3'] },
     { id: 'user-2', name: 'Alice Johnson', email: 'alice.j@example.com', avatarUrl: `https://i.pravatar.cc/40?u=user-2`, role: 'Tester', status: 'Active', lastActive: '5 hours ago', groups: ['group-2'] },
     { id: 'user-3', name: 'Bob Williams', email: 'bob.w@example.com', avatarUrl: `https://i.pravatar.cc/40?u=user-3`, role: 'Developer', status: 'Active', lastActive: '1 day ago', groups: ['group-1'] },
     { id: 'user-4', name: 'Charlie Brown', email: 'charlie.b@example.com', avatarUrl: `https://i.pravatar.cc/40?u=user-4`, role: 'Tester', status: 'Inactive', lastActive: '2 weeks ago', groups: ['group-2'] },
 ];
 
-const mockGroups: Group[] = [
+export let mockGroups: Group[] = [
     { id: 'group-1', name: 'Developers', description: 'Responsible for application development.', users: ['user-1', 'user-3'] },
     { id: 'group-2', name: 'QA Team', description: 'Responsible for quality assurance and testing.', users: ['user-2', 'user-4'] },
     { id: 'group-3', name: 'Project Managers', description: 'Oversee project planning and execution.', users: ['user-1'] },
@@ -67,4 +67,20 @@ export const deleteUser = (userId: string): Promise<void> => {
         return simulateDelay(undefined);
     }
     return Promise.reject(new Error('User not found'));
+};
+
+export const deleteUsers = (userIds: string[]): Promise<void> => {
+    mockUsers = mockUsers.filter(u => !userIds.includes(u.id));
+    mockGroups.forEach(g => {
+        g.users = g.users.filter(uid => !userIds.includes(uid));
+    });
+    return simulateDelay(undefined);
+};
+
+export const deleteGroups = (groupIds: string[]): Promise<void> => {
+    mockGroups = mockGroups.filter(g => !groupIds.includes(g.id));
+    mockUsers.forEach(u => {
+        u.groups = u.groups.filter(gid => !groupIds.includes(gid));
+    });
+    return simulateDelay(undefined);
 };

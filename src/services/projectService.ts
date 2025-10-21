@@ -1,6 +1,5 @@
 // Path: src/services/projectService.ts
-// FIX: Removed local User and Group interfaces and imported them from userService to ensure type consistency.
-import { User, Group } from './userService';
+import { User, Group, mockUsers, mockGroups } from './userService';
 
 export interface Project {
   id: string;
@@ -11,52 +10,64 @@ export interface Project {
   users: User[];
   groups: Group[];
   memberCount: number;
+  defaultTestCaseTemplateId?: string;
 }
 
 export type NewProject = Omit<Project, 'id' | 'memberCount'>;
 
-let mockProjects: Project[] = [
+// --- Find specific users and groups for easier assignment ---
+const adminUser = mockUsers.find(u => u.id === 'user-1')!;
+const alice = mockUsers.find(u => u.id === 'user-2')!;
+
+const devGroup = mockGroups.find(g => g.id === 'group-1')!;
+const qaGroup = mockGroups.find(g => g.id === 'group-2')!;
+const pmGroup = mockGroups.find(g => g.id === 'group-3')!;
+
+// FIX: Export 'mockProjects' to make it accessible to other modules.
+export let mockProjects: Project[] = [
   {
-    id: 'proj-001',
-    name: 'Client Website Redesign',
-    key: 'CWR',
-    description: 'A complete overhaul of the main client-facing website, including new branding and a modern tech stack.',
-    enableApprovals: true,
-    // FIX: The user object was missing properties required by the 'User' interface. It has been updated to include 'role', 'status', 'lastActive', and 'groups'.
-    users: [{ id: 'user-1', name: 'Admin User', email: 'admin@example.com', avatarUrl: `https://i.pravatar.cc/40?u=user-1`, role: 'Lead', status: 'Active', lastActive: '2 hours ago', groups: ['group-1', 'group-3'] }],
-    // FIX: The group object was missing properties required by the 'Group' interface. It has been updated to include 'description' and 'users'.
-    groups: [{ id: 'group-1', name: 'Developers', description: 'Responsible for application development.', users: ['user-1', 'user-3'] }],
-    memberCount: 5,
-  },
-  {
-    id: 'proj-002',
-    name: 'Mobile Banking App',
-    key: 'MBA',
-    description: 'Development of a new native mobile application for iOS and Android for personal banking services.',
+    id: 'proj-nobi',
+    name: 'Nobi Dana Kripto',
+    key: 'NOBI',
+    description: 'Platform for crypto investment and savings.',
     enableApprovals: true,
     users: [],
-    groups: [],
-    memberCount: 12,
+    groups: [devGroup, pmGroup],
+    memberCount: 2, // user-1, user-3
+    defaultTestCaseTemplateId: 'tmpl-multi',
   },
   {
-    id: 'proj-003',
-    name: 'Internal CRM Platform',
-    key: 'ICRM',
-    description: 'Building a new customer relationship management tool for the internal sales and support teams.',
+    id: 'proj-akulaku',
+    name: 'Akulaku Finance',
+    key: 'AKULAKU',
+    description: 'Financial services and buy-now-pay-later platform.',
     enableApprovals: false,
     users: [],
-    groups: [],
-    memberCount: 8,
+    groups: [qaGroup],
+    memberCount: 2, // user-2, user-4
+    defaultTestCaseTemplateId: 'tmpl-bdd',
   },
   {
-      id: 'proj-004',
-      name: 'API Gateway Migration',
-      key: 'AGM',
-      description: 'Migrating the existing API gateway to a new, more scalable cloud-native solution.',
-      enableApprovals: true,
+    id: 'proj-traveloka',
+    name: 'Travel (Traveloka)',
+    key: 'TRAVEL',
+    description: 'All-in-one travel booking platform for flights, hotels, and activities.',
+    enableApprovals: true,
+    users: [adminUser, alice],
+    groups: [],
+    memberCount: 2, // user-1, user-2
+    defaultTestCaseTemplateId: 'tmpl-single',
+  },
+  {
+      id: 'proj-tokopedia',
+      name: 'Travel & Entertainment (Tokopedia)',
+      key: 'TOKPED',
+      description: 'Travel and entertainment booking services integrated within the Tokopedia ecosystem.',
+      enableApprovals: false,
       users: [],
-      groups: [],
-      memberCount: 4,
+      groups: [devGroup, qaGroup, pmGroup],
+      memberCount: 4, // All users
+      defaultTestCaseTemplateId: 'tmpl-exploratory',
   }
 ];
 
@@ -98,4 +109,9 @@ export const updateProject = (id: string, updates: Partial<NewProject>): Promise
 export const deleteProject = (id: string): Promise<void> => {
   mockProjects = mockProjects.filter(p => p.id !== id);
   return simulateDelay(undefined);
+};
+
+export const deleteProjects = (ids: string[]): Promise<void> => {
+    mockProjects = mockProjects.filter(p => !ids.includes(p.id));
+    return simulateDelay(undefined);
 };

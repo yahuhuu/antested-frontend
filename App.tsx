@@ -8,6 +8,7 @@ import ProjectTestCasesPage from './src/pages/ProjectTestCasesPage';
 import ProjectTestRunsPage from './src/pages/ProjectTestRunsPage';
 import ProjectMilestonesPage from './src/pages/ProjectMilestonesPage';
 import ProjectBugReportsPage from './src/pages/ProjectBugReportsPage';
+import ProjectTestRunDetailPage from './src/pages/ProjectTestRunDetailPage';
 
 // Admin Pages
 import AdminProjectsPage from './src/pages/admin/AdminProjectsPage';
@@ -28,6 +29,7 @@ const App: React.FC = () => {
         <Route path="/projects/:projectId" element={<ProjectOverviewPage />} />
         <Route path="/projects/:projectId/test-cases" element={<ProjectTestCasesPage />} />
         <Route path="/projects/:projectId/runs" element={<ProjectTestRunsPage />} />
+        <Route path="/projects/:projectId/runs/:runId" element={<ProjectTestRunDetailPage />} />
         <Route path="/projects/:projectId/milestones" element={<ProjectMilestonesPage />} />
         <Route path="/projects/:projectId/bugs" element={<ProjectBugReportsPage />} />
 

@@ -2,6 +2,7 @@
 import React, { useState, FormEvent, useEffect, ChangeEvent } from 'react';
 import { Project, NewProject } from '../../../../services/projectService';
 import { User, Group, getUsers, getGroups } from '../../../../services/userService';
+import { Template, getTemplates } from '../../../../services/customizationService';
 import { UserIcon, ShieldCheckIcon, TrashIcon, ChevronDownIcon, XIcon } from '../../../ui/Icons';
 
 interface ProjectFormModalProps {
@@ -19,7 +20,9 @@ const ProjectFormModal: React.FC<ProjectFormModalProps> = ({ isOpen, onClose, on
   const [key, setKey] = useState('');
   const [description, setDescription] = useState('');
   const [enableApprovals, setEnableApprovals] = useState(false);
-  
+  const [allTemplates, setAllTemplates] = useState<Template[]>([]);
+  const [defaultTestCaseTemplateId, setDefaultTestCaseTemplateId] = useState<string>('');
+
   // Access State
   const [allUsers, setAllUsers] = useState<User[]>([]);
   const [allGroups, setAllGroups] = useState<Group[]>([]);
@@ -34,11 +37,16 @@ const ProjectFormModal: React.FC<ProjectFormModalProps> = ({ isOpen, onClose, on
   // Reset form when modal opens or project changes
   useEffect(() => {
     if (isOpen) {
+        getUsers().then(setAllUsers);
+        getGroups().then(setAllGroups);
+        getTemplates().then(setAllTemplates);
+
         if (project) {
             setName(project.name);
             setKey(project.key);
             setDescription(project.description);
             setEnableApprovals(project.enableApprovals);
+            setDefaultTestCaseTemplateId(project.defaultTestCaseTemplateId || '');
             setSelectedUsers(project.users);
             setSelectedGroups(project.groups);
         } else {
@@ -46,15 +54,13 @@ const ProjectFormModal: React.FC<ProjectFormModalProps> = ({ isOpen, onClose, on
             setKey('');
             setDescription('');
             setEnableApprovals(false);
+            setDefaultTestCaseTemplateId('');
             setSelectedUsers([]);
             setSelectedGroups([]);
         }
         setErrors({ name: '', key: '' });
         setIsSaving(false);
         setActiveTab('details');
-
-        getUsers().then(setAllUsers);
-        getGroups().then(setAllGroups);
     }
   }, [project, isOpen]);
 
@@ -71,7 +77,7 @@ const ProjectFormModal: React.FC<ProjectFormModalProps> = ({ isOpen, onClose, on
     setErrors({ name: '', key: '' });
     setIsSaving(true);
     
-    const projectData = { name, key, description, enableApprovals, users: selectedUsers, groups: selectedGroups };
+    const projectData = { name, key, description, enableApprovals, users: selectedUsers, groups: selectedGroups, defaultTestCaseTemplateId };
     
     try {
         if (project) await onSave({ ...project, ...projectData });
@@ -157,12 +163,30 @@ const ProjectFormModal: React.FC<ProjectFormModalProps> = ({ isOpen, onClose, on
                   className={`${inputStyle} ${errors.key ? 'border-red-500' : ''}`} maxLength={5} required />
                 {errors.key && <p className="text-xs text-red-500 mt-1">{errors.key}</p>}
               </div>
-              <div className="flex flex-col flex-grow">
+              <div className="flex flex-col">
                 <label htmlFor="projectDescription" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Description</label>
                 <textarea id="projectDescription" value={description} onChange={(e) => setDescription(e.target.value)}
-                  className={`${inputStyle} resize-none flex-grow`} />
+                  className={`${inputStyle} resize-none h-24`} />
               </div>
-              <div className="flex items-start">
+               <div>
+                <label htmlFor="defaultTemplate" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Default Test Case Template</label>
+                <p className="text-xs text-gray-500 dark:text-gray-400">Select a default template for new test cases in this project.</p>
+                <div className="relative mt-2">
+                  <select
+                    id="defaultTemplate"
+                    value={defaultTestCaseTemplateId}
+                    onChange={(e) => setDefaultTestCaseTemplateId(e.target.value)}
+                    className={`${inputStyle} appearance-none pr-10`}
+                  >
+                    <option value="">None (Use system default)</option>
+                    {allTemplates.map(tmpl => (
+                      <option key={tmpl.id} value={tmpl.id}>{tmpl.name}</option>
+                    ))}
+                  </select>
+                  <ChevronDownIcon className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" />
+                </div>
+              </div>
+              <div className="flex items-start pt-2">
                   <div className="flex items-center h-5">
                     <input type="checkbox" id="enableApprovals" checked={enableApprovals} onChange={(e) => setEnableApprovals(e.target.checked)}
                         className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500" />
