@@ -165,3 +165,8 @@ export const deleteRole = (roleId: string): Promise<void> => {
     }
     return Promise.reject(new Error('Role not found'));
 };
+
+export const deleteRoles = (roleIds: string[]): Promise<void> => {
+    mockRoles = mockRoles.filter(r => !roleIds.includes(r.id));
+    return simulateDelay(undefined);
+};

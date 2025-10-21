@@ -70,12 +70,17 @@ const ProjectSidebar: React.FC = () => {
           onClick={() => setIsSwitcherOpen(!isSwitcherOpen)}
           className="w-full flex justify-between items-center p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 transition"
         >
-          <div className="flex flex-col items-start text-left">
-            <span className="font-bold text-gray-800 dark:text-white truncate">{currentProject?.name || 'Loading...'}</span>
+          <div className="flex flex-col items-start text-left min-w-0">
+            <span 
+              className="font-bold text-gray-800 dark:text-white line-clamp-2"
+              title={currentProject?.name}
+            >
+              {currentProject?.name || 'Loading...'}
+            </span>
             {/* FIX: The 'client' property does not exist on the 'Project' type. Replaced with 'key' which is available and suitable for display here. */}
             <span className="text-sm text-gray-500 dark:text-gray-400">{currentProject?.key}</span>
           </div>
-          <ChevronDownIcon className={`w-4 h-4 text-gray-500 dark:text-gray-400 transition-transform duration-200 ${isSwitcherOpen ? 'rotate-180' : ''}`} />
+          <ChevronDownIcon className={`w-4 h-4 text-gray-500 dark:text-gray-400 transition-transform duration-200 flex-shrink-0 ${isSwitcherOpen ? 'rotate-180' : ''}`} />
         </button>
         {isSwitcherOpen && (
           <div className="absolute top-full left-0 right-0 mt-2 bg-white dark:bg-gray-800 border dark:border-gray-700 rounded-md shadow-lg z-20">

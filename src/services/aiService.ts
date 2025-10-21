@@ -103,6 +103,11 @@ export const generateTestCases = (
                 lastUpdated: new Date().toLocaleDateString('en-US'),
                 projectId: projectId,
                 directory: directoryId,
+                // FIX: Added missing properties to conform to the TestCase type.
+                templateId: 'tmpl-single', // Using a sensible default
+                testStepTemplateId: 'tst-single', // Using a sensible default
+                steps: { description: sugg.description }, // Store AI description in steps
+                customFields: {},
             }));
             
             // Here you would typically add the newTestCases to the main mockTestCases array

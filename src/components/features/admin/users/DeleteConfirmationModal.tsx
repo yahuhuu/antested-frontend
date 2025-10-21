@@ -6,7 +6,8 @@ interface DeleteConfirmationModalProps {
   onClose: () => void;
   onConfirm: () => void;
   itemName: string;
-  itemType: 'user' | 'group' | 'role';
+  // FIX: Broadened the 'itemType' prop to accept any string, making the component more reusable for different item types like "case field" or "template".
+  itemType: string;
 }
 
 const DeleteConfirmationModal: React.FC<DeleteConfirmationModalProps> = ({ isOpen, onClose, onConfirm, itemName, itemType }) => {
