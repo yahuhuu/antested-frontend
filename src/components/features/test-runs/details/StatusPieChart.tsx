@@ -46,7 +46,13 @@ const StatusPieChart: React.FC<StatusPieChartProps> = ({ counts }) => {
     }
 
     // FIX: Explicitly convert values to `Number` during reduction to avoid type errors with `unknown` values from `Object.values`.
-    const total = Object.values(counts).reduce((sum, count) => sum + Number(count), 0);
+    // Replaced reduce with a loop to ensure `total` is correctly typed as a number.
+    let total = 0;
+    for (const key in counts) {
+        if (Object.prototype.hasOwnProperty.call(counts, key)) {
+            total += Number(counts[key as keyof StatusCounts] || 0);
+        }
+    }
 
     if (total === 0) {
         return (
@@ -60,7 +66,8 @@ const StatusPieChart: React.FC<StatusPieChartProps> = ({ counts }) => {
     let cumulativePercent = 0;
     const allStatusKeys: StatusKey[] = [...manualStatuses, ...automationStatuses];
     const slices = allStatusKeys.map(key => {
-        const count = counts[key];
+        // FIX: Ensure count is treated as a number to prevent type errors in comparisons and calculations.
+        const count = Number(counts[key] ?? 0);
         if (count === 0) return null;
         
         const percent = count / total;
@@ -98,7 +105,8 @@ const StatusPieChart: React.FC<StatusPieChartProps> = ({ counts }) => {
                 <div className="space-y-1 md:col-span-1">
                     <h4 className="font-semibold text-gray-700 dark:text-gray-300 mb-2 border-b dark:border-gray-600 pb-1">Manual Status</h4>
                     {manualStatuses.map(key => {
-                        const count = counts[key];
+                        // FIX: Ensure count is treated as a number to prevent type errors.
+                        const count = Number(counts[key] ?? 0);
                         const percentage = total > 0 ? Math.round((count / total) * 100) : 0;
                         return (
                              <StatusRow
@@ -115,7 +123,8 @@ const StatusPieChart: React.FC<StatusPieChartProps> = ({ counts }) => {
                 <div className="space-y-1 md:col-span-1">
                      <h4 className="font-semibold text-gray-700 dark:text-gray-300 mb-2 border-b dark:border-gray-600 pb-1">Automation Status</h4>
                      {automationStatuses.map(key => {
-                        const count = counts[key];
+                        // FIX: Ensure count is treated as a number to prevent type errors.
+                        const count = Number(counts[key] ?? 0);
                         const percentage = total > 0 ? Math.round((count / total) * 100) : 0;
                         return (
                              <StatusRow

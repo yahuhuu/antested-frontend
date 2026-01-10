@@ -63,29 +63,75 @@ const generateRealisticStatusCounts = (testCases: TestCase[], status: 'Open' | '
     const total = testCases.length;
     if (total === 0) return counts;
 
+    let totalToDistribute = total;
+    let autoCount = 0;
+    let manualCount = 0;
+
     if (status === 'Completed') {
-        const failedCount = Math.floor(Math.random() * (total * 0.1)); // up to 10% failed
-        const skippedCount = Math.floor(Math.random() * (total * 0.05)); // up to 5% skipped
-        counts.failed = failedCount;
-        counts.skipped = skippedCount;
-        counts.passed = total - failedCount - skippedCount;
+        counts.untested = 0;
+        totalToDistribute = total;
+        autoCount = Math.floor(totalToDistribute * 0.3); // ~30% automated
+        manualCount = totalToDistribute - autoCount;
+
+        // Distribute manual tests for a 'Completed' run (mostly passed)
+        counts.passed = Math.floor(manualCount * 0.85);
+        counts.failed = Math.floor(manualCount * 0.08);
+        counts.skipped = Math.floor(manualCount * 0.04);
+        counts.blocked = manualCount - counts.passed - counts.failed - counts.skipped;
+
+        // Distribute automated tests for a 'Completed' run (mostly passed)
+        counts.automationPassed = Math.floor(autoCount * 0.9);
+        counts.automationFailed = Math.floor(autoCount * 0.07);
+        counts.automationError = autoCount - counts.automationPassed - counts.automationFailed;
+
     } else if (status === 'Overdue') {
         const testedCount = Math.floor(total * (0.4 + Math.random() * 0.4)); // 40-80% tested
         counts.untested = total - testedCount;
-        let remainingToAssign = testedCount;
-        counts.passed = Math.floor(remainingToAssign * (0.5 + Math.random() * 0.3)); // 50-80% of tested are passed
-        remainingToAssign -= counts.passed;
-        counts.failed = Math.floor(remainingToAssign * (0.4 + Math.random() * 0.4)); // 40-80% of remaining are failed
-        remainingToAssign -= counts.failed;
-        counts.blocked = remainingToAssign;
+        
+        autoCount = Math.floor(testedCount * 0.3);
+        manualCount = testedCount - autoCount;
+        
+        // Distribute manual counts
+        counts.passed = Math.floor(manualCount * 0.4);
+        counts.failed = Math.floor(manualCount * 0.3);
+        counts.skipped = Math.floor(manualCount * 0.1);
+        counts.blocked = manualCount - counts.passed - counts.failed - counts.skipped;
+        
+        // Distribute automation counts
+        counts.automationPassed = Math.floor(autoCount * 0.5);
+        counts.automationFailed = Math.floor(autoCount * 0.3);
+        counts.automationError = autoCount - counts.automationPassed - counts.automationFailed;
+
     } else { // 'Open'
-        const testedCount = Math.floor(total * (0.1 + Math.random() * 0.3)); // 10-40% tested
+        const testedCount = Math.floor(total * (0.2 + Math.random() * 0.3)); // 20-50% tested
         counts.untested = total - testedCount;
-        let remainingToAssign = testedCount;
-        counts.passed = Math.floor(remainingToAssign * (0.6 + Math.random() * 0.2)); // 60-80% of tested are passed
-        remainingToAssign -= counts.passed;
-        counts.failed = remainingToAssign;
+        
+        autoCount = Math.floor(testedCount * 0.2);
+        manualCount = testedCount - autoCount;
+        
+        // Distribute manual counts
+        counts.passed = Math.floor(manualCount * 0.5);
+        counts.failed = Math.floor(manualCount * 0.2);
+        counts.skipped = Math.floor(manualCount * 0.15);
+        counts.blocked = manualCount - counts.passed - counts.failed - counts.skipped;
+
+        // Distribute automation counts
+        counts.automationPassed = Math.floor(autoCount * 0.6);
+        counts.automationFailed = Math.floor(autoCount * 0.25);
+        counts.automationError = autoCount - counts.automationPassed - counts.automationFailed;
     }
+
+    // Final integrity check to ensure total matches due to Math.floor rounding
+    const currentTotal = Object.values(counts).reduce((sum, val) => sum + val, 0);
+    const diff = total - currentTotal;
+    if (diff !== 0) {
+        if (status === 'Completed') {
+            counts.passed += diff; // Add remainder to largest group
+        } else {
+            counts.untested += diff; // Add remainder to untested
+        }
+    }
+    
     return counts;
 };
 
