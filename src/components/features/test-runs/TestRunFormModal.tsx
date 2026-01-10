@@ -1,6 +1,6 @@
 // Path: src/components/features/test-runs/TestRunFormModal.tsx
-import React, { useState, useEffect } from 'react';
-import { TestRun, NewTestRun } from '../../../services/testRunService';
+import React, { useState, useEffect, ChangeEvent } from 'react';
+import { TestPlan, NewTestPlan, TestRun, NewTestRun, getTestRuns, getTestPlans } from '../../../services/testRunService';
 import { Milestone, getMilestones } from '../../../services/milestoneService';
 import { User, getUsers } from '../../../services/userService';
 import { XIcon, ChevronDownIcon } from '../../ui/Icons';
@@ -9,7 +9,7 @@ import TestCaseSelectionModal from './TestCaseSelectionModal';
 interface TestRunFormModalProps {
     isOpen: boolean;
     onClose: () => void;
-    onSave: (runData: NewTestRun | TestRun) => void;
+    onSave: (runData: NewTestRun | TestRun, testPlanId?: string) => void;
     run: TestRun | null;
     projectId: string;
 }
@@ -20,6 +20,7 @@ const TestRunFormModal: React.FC<TestRunFormModalProps> = ({ isOpen, onClose, on
     const [description, setDescription] = useState('');
     const [milestoneId, setMilestoneId] = useState('');
     const [assigneeId, setAssigneeId] = useState('');
+    const [testPlanId, setTestPlanId] = useState(''); // New state for Test Plan
     const [startDate, setStartDate] = useState('');
     const [endDate, setEndDate] = useState('');
     const [includeAll, setIncludeAll] = useState(true);
@@ -28,6 +29,7 @@ const TestRunFormModal: React.FC<TestRunFormModalProps> = ({ isOpen, onClose, on
     // Data from services
     const [allMilestones, setAllMilestones] = useState<Milestone[]>([]);
     const [allUsers, setAllUsers] = useState<User[]>([]);
+    const [allTestPlans, setAllTestPlans] = useState<TestPlan[]>([]); // New state for Test Plans
     
     const [isSaving, setIsSaving] = useState(false);
     const [errors, setErrors] = useState({ name: '' });
@@ -39,6 +41,7 @@ const TestRunFormModal: React.FC<TestRunFormModalProps> = ({ isOpen, onClose, on
         if (isOpen && projectId) {
             getMilestones(projectId).then(setAllMilestones);
             getUsers().then(setAllUsers);
+            getTestPlans(projectId).then(setAllTestPlans); // Fetch test plans
 
             if (run) {
                 setName(run.name);
@@ -49,12 +52,15 @@ const TestRunFormModal: React.FC<TestRunFormModalProps> = ({ isOpen, onClose, on
                 setEndDate(run.dueDateEnd ? run.dueDateEnd.split('-').reverse().join('-') : '');
                 setIncludeAll(run.includeAll);
                 setTestCaseIds(run.testCaseIds || []);
+                // NOTE: We don't pre-select a test plan when editing a run, as the association is on the plan side.
+                setTestPlanId(''); 
             } else {
                 // Reset form for new run
                 setName('');
                 setDescription('');
                 setMilestoneId('');
                 setAssigneeId('');
+                setTestPlanId('');
                 setStartDate('');
                 setEndDate('');
                 setIncludeAll(true);
@@ -88,7 +94,7 @@ const TestRunFormModal: React.FC<TestRunFormModalProps> = ({ isOpen, onClose, on
         if (run) {
             onSave({ ...run, ...runData });
         } else {
-            onSave(runData as NewTestRun);
+            onSave(runData as NewTestRun, testPlanId);
         }
     };
     
@@ -125,6 +131,16 @@ const TestRunFormModal: React.FC<TestRunFormModalProps> = ({ isOpen, onClose, on
                         </div>
                         
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                             <div>
+                                <label htmlFor="testPlan" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Test Plan (Optional)</label>
+                                <div className="relative">
+                                    <select id="testPlan" value={testPlanId} onChange={e => setTestPlanId(e.target.value)} className={`${inputStyle} appearance-none pr-10`} disabled={!!run}>
+                                        <option value="">None</option>
+                                        {allTestPlans.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+                                    </select>
+                                    <ChevronDownIcon className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" />
+                                </div>
+                            </div>
                             <div>
                                 <label htmlFor="milestone" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Milestone</label>
                                 <div className="relative">

@@ -4,10 +4,11 @@ import { useParams, Link } from 'react-router-dom';
 import { getTestRunById, TestRun, StatusCounts } from '../services/testRunService';
 import { getTestCasesByIds, getSelectableTestCases, TestCase, Priority, Status, TestCaseHistoryEntry } from '../services/testCaseService';
 import { User, getUsers } from '../services/userService';
+import TestCaseSelectionModal from '../components/features/test-runs/TestCaseSelectionModal';
 
 import OverallProgress from '../components/features/test-runs/details/OverallProgress';
 import StatusPieChart from '../components/features/test-runs/details/StatusPieChart';
-import { CheckSuccessIcon, ChevronDownIcon, BugIcon, SearchIcon, FolderIcon, ChevronLeftIcon, ChevronRightIcon, TrashIcon } from '../components/ui/Icons';
+import { CheckSuccessIcon, ChevronDownIcon, BugIcon, SearchIcon, FolderIcon, ChevronLeftIcon, ChevronRightIcon, TrashIcon, PlusIcon } from '../components/ui/Icons';
 import { Checkbox } from '../components/ui/Checkbox';
 import { TestCaseDirectory, DirectoryNode } from '../components/features/test-cases/TestCaseDirectory';
 import { Pagination } from '../components/ui/Pagination';
@@ -120,6 +121,7 @@ const ProjectTestRunDetailPage: React.FC = () => {
     const [detailsTestCase, setDetailsTestCase] = useState<RunTestCase | null>(null);
     const [isCompleteConfirmOpen, setIsCompleteConfirmOpen] = useState(false);
     const [isDeleteFromRunModalOpen, setIsDeleteFromRunModalOpen] = useState(false);
+    const [isAddCasesModalOpen, setIsAddCasesModalOpen] = useState(false);
     
     // State for filtering and pagination
     const [activeDirectory, setActiveDirectory] = useState('All');
@@ -256,8 +258,8 @@ const ProjectTestRunDetailPage: React.FC = () => {
 
     const displayRunData = useMemo<TestRun | null>(() => {
         if (!run) return null;
-        return { ...run, statusCounts: currentStatusCounts };
-    }, [run, currentStatusCounts]);
+        return { ...run, statusCounts: currentStatusCounts, totalTestCases: runTestCases.length };
+    }, [run, currentStatusCounts, runTestCases.length]);
 
 
     const filteredCases = useMemo(() => {
@@ -421,10 +423,8 @@ const ProjectTestRunDetailPage: React.FC = () => {
         const hasIssues = failedTotal > 0 || currentStatusCounts.blocked > 0;
     
         if (isComplete && !hasIssues) {
-            // If 100% done and no issues, complete directly
             handleConfirmCompleteRun();
         } else {
-            // Otherwise, show confirmation
             setIsCompleteConfirmOpen(true);
         }
     }, [run, currentStatusCounts, handleConfirmCompleteRun]);
@@ -435,6 +435,22 @@ const ProjectTestRunDetailPage: React.FC = () => {
         );
         setSelectedCaseIds(new Set());
         setIsDeleteFromRunModalOpen(false);
+    };
+    
+    const handleAddCasesConfirm = async (newSelectedIds: string[]) => {
+        const currentIds = new Set(runTestCases.map(tc => tc.id));
+        const newIdsToAdd = newSelectedIds.filter(id => !currentIds.has(id));
+
+        if (newIdsToAdd.length > 0) {
+            const newCasesData = await getTestCasesByIds(newIdsToAdd);
+            const newRunCases: RunTestCase[] = newCasesData.map(tc => ({
+                ...tc,
+                runStatus: 'Untested',
+                history: []
+            }));
+            setRunTestCases(prev => [...prev, ...newRunCases]);
+        }
+        setIsAddCasesModalOpen(false);
     };
 
     if (loading) return <p className="text-center p-8">Loading test run...</p>;
@@ -477,7 +493,17 @@ const ProjectTestRunDetailPage: React.FC = () => {
 
                     <div className="flex-1 flex flex-col bg-white dark:bg-gray-800 rounded-lg shadow-md min-w-0">
                         <div className="p-4 border-b dark:border-gray-700">
-                            <h2 className="text-xl font-bold mb-4">Test Cases</h2>
+                             <div className="flex justify-between items-center mb-4">
+                                <h2 className="text-xl font-bold">Test Cases</h2>
+                                {run && (run.status === 'Open' || run.status === 'Overdue') && (
+                                    <button
+                                        onClick={() => setIsAddCasesModalOpen(true)}
+                                        className="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white bg-blue-600 rounded-md hover:bg-blue-700 transition-colors"
+                                    >
+                                        <PlusIcon className="w-5 h-5" /> Add Test Case
+                                    </button>
+                                )}
+                            </div>
                             <div className="flex flex-wrap items-center gap-3">
                                 <div className="relative w-full sm:w-auto flex-grow">
                                     <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
@@ -623,6 +649,15 @@ const ProjectTestRunDetailPage: React.FC = () => {
                 onConfirm={handleConfirmDeleteFromRun}
                 itemCount={selectedCaseIds.size}
             />
+             {isAddCasesModalOpen && (
+                <TestCaseSelectionModal
+                    isOpen={isAddCasesModalOpen}
+                    onClose={() => setIsAddCasesModalOpen(false)}
+                    onConfirm={handleAddCasesConfirm}
+                    projectId={projectId!}
+                    initialSelectedIds={runTestCases.map(tc => tc.id)}
+                />
+            )}
         </>
     );
 };

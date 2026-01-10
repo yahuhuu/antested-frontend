@@ -215,14 +215,24 @@ const ProjectTestRunsPage: React.FC = () => {
         }
     };
 
-    const handleSaveRun = async (runData: NewTestRun | TestRun) => {
+    const handleSaveRun = async (runData: NewTestRun | TestRun, testPlanId?: string) => {
         try {
             if ('id' in runData && runData.id) {
+                // Logic for updating a run. Association changes are complex and not handled here.
                 await updateTestRun(runData.id, runData as Partial<NewTestRun>);
             } else {
-                await createTestRun(runData as NewTestRun);
+                // Logic for creating a new run
+                const newRun = await createTestRun(runData as NewTestRun);
+                // If a test plan was selected, update it to include the new run
+                if (testPlanId && newRun) {
+                    const planToUpdate = testPlans.find(p => p.id === testPlanId);
+                    if (planToUpdate) {
+                        const updatedRunIds = [...planToUpdate.testRunIds, newRun.id];
+                        await updateTestPlan(testPlanId, { ...planToUpdate, testRunIds: updatedRunIds });
+                    }
+                }
             }
-            await fetchData();
+            await fetchData(); // This will refresh both runs and plans
         } catch (error) {
             console.error("Failed to save test run", error);
             setError("Failed to save the test run. Please try again.");

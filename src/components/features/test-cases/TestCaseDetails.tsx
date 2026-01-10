@@ -8,7 +8,7 @@ import {
     getTestStepTemplates, TestStepTemplateDefinition
 } from '../../../services/customizationService';
 import TestStepDetailsView from './TestStepDetailsView';
-import { EditIcon, TrashIcon, PaperclipIcon, ChevronDownIcon } from '../../ui/Icons';
+import { EditIcon, TrashIcon, PaperclipIcon, ChevronDownIcon, BugIcon } from '../../ui/Icons';
 import { Checkbox } from '../../ui/Checkbox';
 
 type RunCaseStatus = 'Untested' | 'Passed' | 'Failed' | 'Blocked' | 'Skipped';
@@ -313,6 +313,14 @@ const TestCaseDetails: React.FC<TestCaseDetailsProps> = ({
                                                             </a>
                                                         ))}
                                                     </div>
+                                                </div>
+                                            )}
+                                            {(entry.status === 'Failed' || entry.status === 'Automation Failed') && (
+                                                <div className="mt-3">
+                                                    <button className="flex items-center gap-2 px-3 py-1.5 text-xs font-semibold text-white bg-red-600 rounded-md hover:bg-red-700 transition-colors">
+                                                        <BugIcon className="w-4 h-4" />
+                                                        Add Bug Report
+                                                    </button>
                                                 </div>
                                             )}
                                         </div>

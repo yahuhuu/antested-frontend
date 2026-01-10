@@ -294,7 +294,7 @@ export const getAllTestCasesForProject = (projectId: string): Promise<TestCase[]
 export const getSelectableTestCases = (projectId: string): Promise<TestCase[]> => {
   return new Promise((resolve) => {
     setTimeout(() => {
-      const results = mockTestCases.filter(tc => tc.projectId === projectId && tc.status !== 'Draft' && tc.status !== 'Archived');
+      const results = mockTestCases.filter(tc => tc.projectId === projectId && (tc.status === 'Approved' || tc.status === 'Ready'));
       resolve(results);
     }, 100);
   });

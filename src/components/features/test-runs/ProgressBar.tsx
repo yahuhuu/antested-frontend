@@ -7,9 +7,13 @@ interface ProgressBarProps {
 }
 
 const ProgressBar: React.FC<ProgressBarProps> = ({ counts }) => {
-    // FIX: Explicitly convert `count` to a `Number` to prevent type errors during the reduction,
-    // as `Object.values` can return `unknown[]` in strict TypeScript configurations.
-    const total = Object.values(counts).reduce((sum, count) => sum + Number(count), 0);
+    // FIX: Replaced reduce with a loop to ensure `total` is correctly typed as a number, resolving downstream arithmetic errors.
+    let total = 0;
+    for (const key in counts) {
+        if (Object.prototype.hasOwnProperty.call(counts, key)) {
+            total += Number(counts[key as keyof StatusCounts] || 0);
+        }
+    }
     
     if (total === 0) {
         return (
@@ -25,9 +29,9 @@ const ProgressBar: React.FC<ProgressBarProps> = ({ counts }) => {
         { key: 'automationPassed', value: counts.automationPassed, color: 'bg-green-600' },
         { key: 'failed', value: counts.failed, color: 'bg-red-500' },
         { key: 'automationFailed', value: counts.automationFailed, color: 'bg-red-600' },
-        { key: 'automationError', value: counts.automationError, color: 'bg-purple-600' },
-        { key: 'blocked', value: counts.blocked, color: 'bg-gray-500' },
+        { key: 'automationError', value: counts.automationError, color: 'bg-purple-500' },
         { key: 'skipped', value: counts.skipped, color: 'bg-yellow-400' },
+        { key: 'blocked', value: counts.blocked, color: 'bg-gray-500' },
         { key: 'untested', value: counts.untested, color: 'bg-gray-200 dark:bg-gray-600' },
     ];
 
